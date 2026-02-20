@@ -34,20 +34,44 @@ class RegisterController extends Controller
             'role' => 'required|in:student,instructor',
         ]);
 
-        // Extract domain from email
-        $emailDomain = substr(strrchr($validated['email'], "@"), 1);
+        // Extract full domain from email
+        $fullDomain = substr(strrchr($validated['email'], "@"), 1);
 
-        // Check if school exists with this domain
-        $school = School::where('school_domain', $emailDomain)
+        // Extract root domain (handles subdomains)
+        $emailDomain = $this->extractRootDomain($fullDomain);
+
+        // Try to find school with exact match first
+        $school = School::where('school_domain', $fullDomain)
             ->where('approval_status', 'approved')
             ->first();
 
+        // If not found, try with root domain
         if (!$school) {
+            $school = School::where('school_domain', $emailDomain)
+                ->where('approval_status', 'approved')
+                ->first();
+        }
+
+        // If still not found, check if school exists but not approved
+        if (!$school) {
+            $pendingSchool = School::where(function($query) use ($fullDomain, $emailDomain) {
+                $query->where('school_domain', $fullDomain)
+                    ->orWhere('school_domain', $emailDomain);
+            })->whereIn('approval_status', ['pending', 'rejected'])->first();
+
+            if ($pendingSchool) {
+                return back()->withErrors([
+                    'email' => 'Your school is currently pending approval. Please wait for administrator approval or contact support.'
+                ])->withInput();
+            }
+
+            // School doesn't exist at all
             return back()->withErrors([
-                'email' => 'No approved school found for this email domain. Please contact your school administrator or register your school first.'
+                'email' => "No school found for domain '@{$emailDomain}'. Please ask your school administrator to register at: " . route('school-registration.create')
             ])->withInput();
         }
 
+        // Rest of your registration code...
         // Generate verification code
         $verificationCode = strtoupper(Str::random(6));
 
@@ -73,7 +97,7 @@ class RegisterController extends Controller
             $validated['role'] . '_id' => $uniqueId,
             'verification_code' => $verificationCode,
             'verification_code_expires_at' => now()->addHours(24),
-            'approval_status' => 'pending', // Requires admin approval
+            'approval_status' => 'pending',
         ]);
 
         // Assign Spatie role
@@ -93,14 +117,38 @@ class RegisterController extends Controller
         return redirect()->route('verification.notice')
             ->with('success', 'Registration successful! Please check your email for the verification code.');
     }
+    protected function extractRootDomain($domain)
+    {
+        // Remove any protocol if present
+        $domain = str_replace(['http://', 'https://', 'www.'], '', $domain);
+
+        // Split by dots
+        $parts = explode('.', $domain);
+
+        // If only 2 parts (e.g., kirkwood.edu), return as is
+        if (count($parts) <= 2) {
+            return $domain;
+        }
+
+        // Get last 2 parts (root domain)
+        // student.kirkwood.edu -> kirkwood.edu
+        // mail.google.com -> google.com
+        return $parts[count($parts) - 2] . '.' . $parts[count($parts) - 1];
+    }
 
     protected function sendVerificationEmail($user, $code)
     {
-        // TODO: Implement actual email sending
-        // For now, we'll just log it
-        \Log::info("Verification code for {$user->email}: {$code}");
+        try {
+            \Mail::to($user->email)->send(new \App\Mail\VerificationCodeMail($user, $code));
 
-        // You would use Laravel Mail here:
-        // Mail::to($user->email)->send(new VerificationEmail($code));
+            // Log success
+            \Log::info("Verification email sent successfully to {$user->email}");
+        } catch (\Exception $e) {
+            // Log error but don't fail registration
+            \Log::error("Failed to send verification email to {$user->email}: " . $e->getMessage());
+
+            // Also log the code so admin can help user if needed
+            \Log::info("Verification code for {$user->email}: {$code}");
+        }
     }
 }

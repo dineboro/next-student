@@ -44,20 +44,21 @@ class EmailVerificationController extends Controller
             return back()->withErrors(['verification_code' => 'Invalid session. Please register again.']);
         }
 
-        // Check if code is expired
-        if (now()->isAfter($user->verification_code_expires_at)) {
+        // Check if expiration date exists and is expired
+        if ($user->verification_code_expires_at && now()->isAfter($user->verification_code_expires_at)) {
             return back()->withErrors(['verification_code' => 'Verification code has expired. Please request a new one.']);
+        }
+
+        // Check if verification code exists
+        if (!$user->verification_code) {
+            return back()->withErrors(['verification_code' => 'No verification code found. Please request a new one.']);
         }
 
         // Check if code matches
         if (strtoupper($request->verification_code) !== $user->verification_code) {
-            // Log failed attempt
-            EmailVerificationLog::create([
-                'user_id' => $user->id,
-                'verification_code' => $request->verification_code,
-                'ip_address' => $request->ip(),
-                'action' => 'failed',
-                'action_at' => now(),
+            \Log::warning("Failed verification attempt for user {$user->id}", [
+                'email' => $user->email,
+                'ip' => $request->ip(),
             ]);
 
             return back()->withErrors(['verification_code' => 'Invalid verification code. Please try again.']);
@@ -70,13 +71,8 @@ class EmailVerificationController extends Controller
             'verification_code_expires_at' => null,
         ]);
 
-        // Log successful verification
-        EmailVerificationLog::create([
-            'user_id' => $user->id,
-            'verification_code' => $request->verification_code,
-            'ip_address' => $request->ip(),
-            'action' => 'verified',
-            'action_at' => now(),
+        \Log::info("Email verified successfully for user {$user->id}", [
+            'email' => $user->email,
         ]);
 
         return redirect()->route('verification.pending-approval')
