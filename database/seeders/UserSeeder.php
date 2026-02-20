@@ -26,6 +26,8 @@ class UserSeeder extends Seeder
                 'email_verified_at' => now(),
                 'approval_status' => 'approved',  //  Pre-approved for testing
                 'approved_at' => now(),
+                'verification_code' => null,  //  No pending verification
+                'verification_code_expires_at' => null,
             ],
             [
                 'school_id' => 1,
@@ -40,6 +42,8 @@ class UserSeeder extends Seeder
                 'email_verified_at' => now(),
                 'approval_status' => 'approved',
                 'approved_at' => now(),
+                'verification_code' => null,  //  No pending verification
+                'verification_code_expires_at' => null,
             ],
             [
                 'school_id' => 1,
@@ -54,6 +58,8 @@ class UserSeeder extends Seeder
                 'email_verified_at' => now(),
                 'approval_status' => 'approved',
                 'approved_at' => now(),
+                'verification_code' => null,  //  No pending verification
+                'verification_code_expires_at' => null,
             ],
         ];
 
@@ -79,6 +85,8 @@ class UserSeeder extends Seeder
                 'email_verified_at' => now(),
                 'approval_status' => 'approved',
                 'approved_at' => now(),
+                'verification_code' => null,  //  No pending verification
+                'verification_code_expires_at' => null,
             ],
             [
                 'school_id' => 1,
