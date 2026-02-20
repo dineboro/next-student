@@ -49,8 +49,19 @@ class HelpRequestPolicy
     public function update(User $user, HelpRequest $helpRequest): bool
     {
         // Only the assigned instructor can update the request
-        return $user->role === 'instructor' &&
-            $helpRequest->assigned_instructor_id === $user->id;
+        if ($user->role === 'student' &&
+            $helpRequest->student_id === $user->id &&
+            $helpRequest->status === 'pending') {
+            return true;
+        }
+
+        // Instructors can update assigned requests
+        if ($user->role === 'instructor' &&
+            $helpRequest->assigned_instructor_id === $user->id) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

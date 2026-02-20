@@ -23,6 +23,14 @@ class User extends Authenticatable
         'student_id',
         'instructor_id',
         'profile_photo',
+        'verification_code',
+        'verification_code_expires_at',
+        'approval_status',
+        'rejection_reason',
+        'approved_at',
+        'approved_by',
+        'bio',
+        'privacy_settings',
     ];
 
     protected $hidden = [
@@ -34,9 +42,47 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'is_available' => 'boolean',
         'password' => 'hashed',
+        'verification_code_expires_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'privacy_settings' => 'array',
     ];
 
     // Relationships
+
+    public function settings()
+    {
+        return $this->hasOne(UserSettings::class);
+    }
+
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function approvedUsers()
+    {
+        return $this->hasMany(User::class, 'approved_by');
+    }
+
+    public function scopeApproved($query)
+    {
+        return $query->where('approval_status', 'approved');
+    }
+
+    public function scopePendingApproval($query)
+    {
+        return $query->where('approval_status', 'pending');
+    }
+
+    public function isEmailVerified()
+    {
+        return !is_null($this->email_verified_at);
+    }
+
+    public function isApproved()
+    {
+        return $this->approval_status === 'approved';
+    }
     public function school()
     {
         return $this->belongsTo(School::class);

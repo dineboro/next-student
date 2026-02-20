@@ -6,65 +6,58 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-//        Schema::create('users', function (Blueprint $table) {
-//            $table->id();
-//            $table->string('name');
-//            $table->string('email')->unique();
-//            $table->timestamp('email_verified_at')->nullable();
-//            $table->string('password');
-//            $table->rememberToken();
-//            $table->timestamps();
-//        });
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('school_id')->constrained()->onDelete('cascade');
+            $table->unsignedBigInteger('school_id');  // Don't use foreignId yet
             $table->string('first_name');
             $table->string('last_name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('phone_number')->nullable();
-            $table->enum('role', ['student', 'instructor'])->default('student');
+            $table->enum('role', ['student', 'instructor', 'admin'])->default('student');
             $table->boolean('is_available')->default(false)->comment('For instructors only');
             $table->string('student_id')->nullable()->unique()->comment('Student ID number');
             $table->string('instructor_id')->nullable()->unique()->comment('Instructor ID number');
             $table->text('profile_photo')->nullable();
+
+            // Verification fields
+            $table->string('verification_code')->nullable();
+            $table->timestamp('verification_code_expires_at')->nullable();
+
+            // Approval fields
+            $table->enum('approval_status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->text('rejection_reason')->nullable();
+            $table->timestamp('approved_at')->nullable();
+            $table->unsignedBigInteger('approved_by')->nullable();
+
+            $table->text('bio')->nullable();
+            $table->json('privacy_settings')->nullable();
+
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();
 
+            // Indexes
             $table->index(['school_id', 'role']);
             $table->index('is_available');
+            $table->index('approval_status');
+            $table->index('verification_code');
         });
 
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
-        });
-
-        Schema::create('sessions', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
-            $table->longText('payload');
-            $table->integer('last_activity')->index();
+        // Add foreign key constraint AFTER table is created
+        Schema::table('users', function (Blueprint $table) {
+            $table->foreign('school_id')
+                ->references('id')
+                ->on('schools')
+                ->onDelete('cascade');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('sessions');
     }
 };

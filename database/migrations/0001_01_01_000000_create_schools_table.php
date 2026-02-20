@@ -15,13 +15,22 @@ return new class extends Migration
             $table->id();
             $table->string('school_name');
             $table->string('school_domain')->unique();
+            $table->string('address')->nullable();
+            $table->string('contact_info')->nullable();
+            $table->string('registration_id')->unique()
+                ->comment('State/Federal government registration ID');
+            $table->enum('approval_status', ['pending', 'approved', 'rejected'])
+                ->default('pending');
+            $table->text('rejection_reason')->nullable();
+            $table->timestamp('approved_at')->nullable();
+//            $table->foreignId('approved_by')->nullable()->constrained('users');
+            $table->unsignedBigInteger('approved_by')->nullable();
             $table->timestamps();
+
+            $table->index('approval_status');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('schools');

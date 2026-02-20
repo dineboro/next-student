@@ -74,7 +74,7 @@
                 <!-- Phone Number -->
                 <div class="mb-4">
                     <label for="phone_number" class="block text-gray-700 text-sm font-bold mb-2">Phone Number *</label>
-                    <input type="tel" name="phone_number" id="phone_number" value="{{ old('phone_number') }}" required placeholder="+1-555-0123" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline @error('phone_number') border-red-500 @enderror">
+                    <input type="tel" name="phone_number" id="phone_number" value="{{ old('phone_number') }}" required placeholder="+1-555-555-0123" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline @error('phone_number') border-red-500 @enderror">
                     @error('phone_number')
                     <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
                     @enderror
@@ -107,7 +107,13 @@
                         Already have an account? Login
                     </a>
                 </div>
+                <div class="text-center mt-2">
+                    <a href="{{ route('school-registration.create') }}" class="text-sm text-gray-600 hover:text-gray-800">
+                        🏫 School not listed? Register it here
+                    </a>
+                </div>
             </form>
         </div>
     </div>
+
 @endsection

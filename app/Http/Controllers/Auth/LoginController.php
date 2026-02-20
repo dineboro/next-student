@@ -10,10 +10,13 @@ use Illuminate\Validation\ValidationException;
 class LoginController extends Controller
 {
     //
-    public function showLoginForm(){
+    public function showLoginForm()
+    {
         return view('auth.login');
     }
-    public function login(Request $request){
+
+    public function login(Request $request)
+    {
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -26,22 +29,40 @@ class LoginController extends Controller
 
             $user = Auth::user();
 
+            // Check if email is verified
+            if (!$user->email_verified_at) {
+                Auth::logout();
+                session(['pending_verification_user_id' => $user->id]);
+                return redirect()->route('verification.notice')
+                    ->with('error', 'Please verify your email address before logging in.');
+            }
+
+            // Check if account is approved
+            if ($user->approval_status !== 'approved') {
+                Auth::logout();
+                return redirect()->route('verification.pending-approval')
+                    ->with('error', 'Your account is pending admin approval.');
+            }
+
             // Redirect based on role
             if ($user->role === 'instructor') {
                 return redirect()->intended(route('instructor.dashboard'));
             } else {
                 return redirect()->intended(route('student.dashboard'));
             }
-    }
+        }
+
         throw ValidationException::withMessages([
             'email' => __('The provided credentials do not match our records.'),
         ]);
     }
 
-    public function logout(Request $request){
+    public function logout(Request $request)
+    {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect()->route('login')->with('success', 'You have been logged out.');
     }
 }
