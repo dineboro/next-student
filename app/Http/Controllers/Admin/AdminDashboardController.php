@@ -10,10 +10,7 @@ use App\Models\HelpRequest;
 
 class AdminDashboardController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(['auth', 'role:admin']);
-    }
+    // Removed the __construct() method since middleware is handled in web.php
 
     public function index()
     {
@@ -25,7 +22,7 @@ class AdminDashboardController extends Controller
             'active_requests' => HelpRequest::whereIn('status', ['pending', 'assigned', 'in_progress'])->count(),
         ];
 
-        //  Safely try to get pending schools (in case table doesn't exist)
+        // Safely try to get pending schools
         try {
             $stats['pending_schools'] = SchoolRegistrationRequest::where('status', 'pending')->count();
         } catch (\Exception $e) {
@@ -38,7 +35,7 @@ class AdminDashboardController extends Controller
             ->limit(5)
             ->get();
 
-        //  Safely try to get recent schools
+        // Safely try to get recent schools
         $recentSchools = collect([]);
         try {
             $recentSchools = SchoolRegistrationRequest::where('status', 'pending')

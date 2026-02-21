@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
@@ -33,21 +32,12 @@ class LoginController extends Controller
             if (!$user->email_verified_at) {
                 Auth::logout();
 
-                // Generate NEW verification code
-                $verificationCode = strtoupper(Str::random(6));
-
-                $user->update([
-                    'verification_code' => $verificationCode,
-                    'verification_code_expires_at' => now()->addHours(24),
-                ]);
-
-                // Send NEW verification email
-                $this->sendVerificationEmail($user, $verificationCode);
-
+                // Store user ID in session in case the notice view needs it
+                // (e.g., for a manual "Resend Email" button)
                 session(['pending_verification_user_id' => $user->id]);
 
                 return redirect()->route('verification.notice')
-                    ->with('success', 'A new verification code has been sent to your email.');
+                    ->with('error', 'You must verify your email address before logging in. Please check your inbox for the code sent during registration.');
             }
 
             // Check if account is approved
@@ -82,19 +72,5 @@ class LoginController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('login')->with('success', 'You have been logged out.');
-    }
-
-    /**
-     * Send verification email
-     */
-    protected function sendVerificationEmail($user, $code)
-    {
-        try {
-            \Mail::to($user->email)->send(new \App\Mail\VerificationCodeMail($user, $code));
-            \Log::info("Verification email sent successfully to {$user->email}");
-        } catch (\Exception $e) {
-            \Log::error("Failed to send verification email to {$user->email}: " . $e->getMessage());
-            \Log::info("Verification code for {$user->email}: {$code}");
-        }
     }
 }

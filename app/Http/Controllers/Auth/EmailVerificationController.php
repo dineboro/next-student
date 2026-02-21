@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
-
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\EmailVerificationLog;
@@ -25,7 +25,8 @@ class EmailVerificationController extends Controller
         }
 
         if ($user->email_verified_at) {
-            return redirect()->route('verification.pending-approval');
+            // If already verified, send them to login instead of pending-approval
+            return redirect()->route('login')->with('info', 'Your email is already verified. Please log in.');
         }
 
         return view('auth.verify-email', compact('user'));
@@ -64,19 +65,33 @@ class EmailVerificationController extends Controller
             return back()->withErrors(['verification_code' => 'Invalid verification code. Please try again.']);
         }
 
-        // Mark email as verified
+        // Mark email as verified and ensure approval status is confirmed
         $user->update([
             'email_verified_at' => now(),
             'verification_code' => null,
             'verification_code_expires_at' => null,
+            'approval_status' => 'approved',
+            'approved_at' => $user->approved_at ?? now(),
         ]);
 
         \Log::info("Email verified successfully for user {$user->id}", [
             'email' => $user->email,
         ]);
 
-        return redirect()->route('verification.pending-approval')
-            ->with('success', 'Email verified successfully! Your account is now pending admin approval.');
+        // Auto-login the user!
+        Auth::login($user);
+
+        // Clear the verification session
+        $request->session()->forget('pending_verification_user_id');
+
+        // Redirect straight to their proper dashboard
+        if ($user->role === 'instructor') {
+            return redirect()->route('instructor.dashboard')->with('success', 'Email verified successfully! Welcome.');
+        } elseif ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard')->with('success', 'Email verified successfully! Welcome.');
+        } else {
+            return redirect()->route('student.dashboard')->with('success', 'Email verified successfully! Welcome.');
+        }
     }
 
     public function resend(Request $request)

@@ -97,7 +97,8 @@ class RegisterController extends Controller
             $validated['role'] . '_id' => $uniqueId,
             'verification_code' => $verificationCode,
             'verification_code_expires_at' => now()->addHours(24),
-            'approval_status' => 'pending',
+            'approval_status' => 'approved',
+            'approved_at' => now(),
         ]);
 
         // Assign Spatie role
