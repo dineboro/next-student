@@ -48,12 +48,12 @@
                         Don't have an account? Register
                     </a>
                 </div>
-                <!-- Add this -->
-                <div class="text-center mt-2">
-                    <a href="{{ route('school-registration.create') }}" class="text-sm text-gray-600 hover:text-gray-800">
-                        🏫 Register Your School
-                    </a>
-                </div>
+{{--                <!-- Add this -->--}}
+{{--                <div class="text-center mt-2">--}}
+{{--                    <a href="{{ route('school-registration.create') }}" class="text-sm text-gray-600 hover:text-gray-800">--}}
+{{--                        🏫 Register Your School--}}
+{{--                    </a>--}}
+{{--                </div>--}}
             </form>
         </div>
     </div>

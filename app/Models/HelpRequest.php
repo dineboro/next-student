@@ -7,18 +7,61 @@ use Illuminate\Database\Eloquent\Model;
 class HelpRequest extends Model
 {
     protected $fillable = [
-        'student_id', 'vehicle_id', 'bay_id', 'category_id', 'assigned_instructor_id',
-        'title', 'description', 'priority_level', 'status', 'assigned_at',
-        'started_at', 'completed_at', 'cancelled_at', 'cancellation_reason',
-        'resolution_notes', 'estimated_duration_minutes'
+        'student_id',
+        'assigned_instructor_id',
+        'class_section_id',
+        'title',
+        'description',
+        'location',
+        'image',
+        'status',
+        'completed_at',
+        'cancelled_at',
+        'cancellation_reason',
+        'resolution_notes',
     ];
 
     protected $casts = [
-        'assigned_at' => 'datetime',
-        'started_at' => 'datetime',
         'completed_at' => 'datetime',
         'cancelled_at' => 'datetime',
     ];
+
+    // -------------------------------------------------------------------------
+    // Scopes
+    // -------------------------------------------------------------------------
+
+    public function scopePending($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'pending');
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    public function statusBadgeClass(): string
+    {
+        return match($this->status) {
+            'pending'   => 'bg-yellow-100 text-yellow-800',
+            'completed' => 'bg-green-100 text-green-800',
+            'cancelled' => 'bg-red-100 text-red-800',
+            default     => 'bg-gray-100 text-gray-800',
+        };
+    }
+
+    public function statusLabel(): string
+    {
+        return ucfirst($this->status);
+    }
+
+    // -------------------------------------------------------------------------
+    // Relationships
+    // -------------------------------------------------------------------------
 
     public function student()
     {
@@ -30,24 +73,14 @@ class HelpRequest extends Model
         return $this->belongsTo(User::class, 'assigned_instructor_id');
     }
 
-    public function vehicle()
+    public function classSection()
     {
-        return $this->belongsTo(Vehicle::class);
-    }
-
-    public function bay()
-    {
-        return $this->belongsTo(Bay::class);
-    }
-
-    public function category()
-    {
-        return $this->belongsTo(RequestCategory::class, 'category_id');
+        return $this->belongsTo(ClassSection::class, 'class_section_id');
     }
 
     public function comments()
     {
-        return $this->hasMany(Comment::class);
+        return $this->hasMany(Comment::class)->orderBy('created_at', 'asc');
     }
 
     public function attachments()
@@ -55,19 +88,8 @@ class HelpRequest extends Model
         return $this->hasMany(RequestAttachment::class);
     }
 
-    public function rating()
-    {
-        return $this->hasOne(Rating::class);
-    }
-
-    public function queuePosition()
-    {
-        return $this->hasOne(QueuePosition::class);
-    }
-
     public function activityLogs()
     {
         return $this->hasMany(ActivityLog::class);
     }
 }
-

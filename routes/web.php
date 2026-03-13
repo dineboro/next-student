@@ -1,47 +1,33 @@
 <?php
 
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Student\DashboardController as StudentDashboardController;
-use App\Http\Controllers\Student\RequestManagementController;
 use App\Http\Controllers\Instructor\DashboardController as InstructorDashboardController;
-use App\Http\Controllers\Instructor\InstructorListController;
+use App\Http\Controllers\Instructor\ClassSectionController;
 use App\Http\Controllers\HelpRequestController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
-use App\Http\Controllers\SchoolRegistrationController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\UserApprovalController;
-use App\Http\Controllers\Admin\SchoolApprovalController;
-
 
 // ============================================================================
-// PUBLIC ROUTES
+// ROOT
 // ============================================================================
 
-Route::get('/', function () {
-    return redirect()->route('login');
-});
-
-// School Registration
-Route::get('/register-school', [SchoolRegistrationController::class, 'showForm'])->name('school-registration.create');
-Route::post('/register-school', [SchoolRegistrationController::class, 'store'])->name('school-registration.store');
-Route::get('/school-registration/success', [SchoolRegistrationController::class, 'success'])->name('school-registration.success');
+Route::get('/', fn() => redirect()->route('login'));
 
 // ============================================================================
-// AUTHENTICATION ROUTES
+// AUTH
 // ============================================================================
 
 Route::middleware('guest')->group(function () {
-    // Registration
     Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [RegisterController::class, 'register']);
 
-    // Login
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
 });
@@ -52,7 +38,6 @@ Route::post('/verify-email', [EmailVerificationController::class, 'verify'])->na
 Route::post('/verify-email/resend', [EmailVerificationController::class, 'resend'])->name('verification.resend');
 Route::get('/pending-approval', [EmailVerificationController::class, 'pendingApproval'])->name('verification.pending-approval');
 
-// Logout
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 // ============================================================================
@@ -63,11 +48,20 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     Route::get('/dashboard', [StudentDashboardController::class, 'index'])->name('dashboard');
     Route::get('/my-requests', [StudentDashboardController::class, 'myRequests'])->name('my-requests');
 
-    // Request Management
-    Route::get('/requests/{helpRequest}/edit', [RequestManagementController::class, 'edit'])->name('requests.edit');
-    Route::put('/requests/{helpRequest}', [RequestManagementController::class, 'update'])->name('requests.update');
-    Route::get('/requests/{helpRequest}/cancel', [RequestManagementController::class, 'cancelForm'])->name('requests.cancel-form');
-    Route::post('/requests/{helpRequest}/cancel', [RequestManagementController::class, 'cancel'])->name('requests.cancel');
+    // Create / submit request
+    Route::get('/requests/create', [HelpRequestController::class, 'create'])->name('requests.create');
+    Route::post('/requests', [HelpRequestController::class, 'store'])->name('requests.store');
+
+    // View request
+    Route::get('/requests/{helpRequest}', [HelpRequestController::class, 'show'])->name('requests.show');
+
+    // Edit request (pending only)
+    Route::get('/requests/{helpRequest}/edit', [HelpRequestController::class, 'edit'])->name('requests.edit');
+    Route::put('/requests/{helpRequest}', [HelpRequestController::class, 'update'])->name('requests.update');
+
+    // Cancel request
+    Route::get('/requests/{helpRequest}/cancel', [HelpRequestController::class, 'cancelForm'])->name('requests.cancel-form');
+    Route::post('/requests/{helpRequest}/cancel', [HelpRequestController::class, 'cancel'])->name('requests.cancel');
 });
 
 // ============================================================================
@@ -76,37 +70,41 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
 
 Route::middleware(['auth', 'role:instructor'])->prefix('instructor')->name('instructor.')->group(function () {
     Route::get('/dashboard', [InstructorDashboardController::class, 'index'])->name('dashboard');
-    Route::post('/toggle-availability', [InstructorDashboardController::class, 'toggleAvailability'])->name('toggle-availability');
-    Route::get('/active-requests', [InstructorDashboardController::class, 'activeRequests'])->name('active-requests');
     Route::get('/history', [InstructorDashboardController::class, 'history'])->name('history');
 
-    // Instructor List
-    Route::get('/instructors', [InstructorListController::class, 'index'])->name('instructors-list');
-    Route::get('/instructors/{instructor}', [InstructorListController::class, 'show'])->name('instructors.show');
+    // Class section management
+    Route::resource('sections', ClassSectionController::class)->names('sections');
+
+// Roster management
+    Route::get('/sections/search-student', [ClassSectionController::class, 'searchStudent'])->name('sections.search-student');
+    Route::post('/sections/{section}/students', [ClassSectionController::class, 'addStudent'])->name('sections.students.add');
+    Route::delete('/sections/{section}/students/{student}', [ClassSectionController::class, 'removeStudent'])->name('sections.students.remove');
+    // Request actions
+    Route::get('/requests/{helpRequest}', [HelpRequestController::class, 'show'])->name('requests.show');
+    Route::post('/requests/{helpRequest}/complete', [HelpRequestController::class, 'markComplete'])->name('requests.complete');
+    Route::post('/requests/{helpRequest}/cancel', [HelpRequestController::class, 'instructorCancel'])->name('requests.cancel');
 });
 
 // ============================================================================
-// SHARED ROUTES (AUTHENTICATED USERS)
+// SHARED AUTH ROUTES
 // ============================================================================
 
 Route::middleware('auth')->group(function () {
-    // Help Requests
-    Route::resource('help-requests', HelpRequestController::class)->except(['edit']);
-
-    // Comments
+    // Comment — post new comment (returns JSON)
     Route::post('/help-requests/{helpRequest}/comments', [CommentController::class, 'store'])->name('comments.store');
+
+    // Poll comments for near-real-time updates (returns JSON)
+    Route::get('/help-requests/{helpRequest}/comments/poll', [HelpRequestController::class, 'pollComments'])->name('comments.poll');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
-    Route::put('/profile/email', [ProfileController::class, 'updateEmail'])->name('profile.update-email');
 
     // Settings
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
     Route::put('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.update-notifications');
-    Route::put('/settings/privacy', [SettingsController::class, 'updatePrivacy'])->name('settings.update-privacy');
     Route::put('/settings/theme', [SettingsController::class, 'updateTheme'])->name('settings.update-theme');
     Route::delete('/settings/account', [SettingsController::class, 'deleteAccount'])->name('settings.delete-account');
 });
@@ -118,16 +116,8 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-    // User Approvals
+    // Instructor approvals (only instructors need manual admin approval)
     Route::get('/users/pending', [UserApprovalController::class, 'pending'])->name('users.pending');
     Route::post('/users/{user}/approve', [UserApprovalController::class, 'approve'])->name('users.approve');
     Route::post('/users/{user}/reject', [UserApprovalController::class, 'reject'])->name('users.reject');
-
-    // School Approvals
-    Route::get('/schools/pending', [SchoolApprovalController::class, 'pending'])->name('schools.pending');
-    Route::post('/schools/{request}/approve', [SchoolApprovalController::class, 'approve'])->name('schools.approve');
-    Route::post('/schools/{request}/reject', [SchoolApprovalController::class, 'reject'])->name('schools.reject');
-
-    // School Registration Requests
-    Route::get('/school-requests/pending', [SchoolApprovalController::class, 'pendingRequests'])->name('school-requests.pending');
 });

@@ -1,191 +1,119 @@
-
 @extends('layouts.app')
 
 @section('title', 'Student Dashboard')
 
 @section('content')
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto px-4 py-8">
         <div class="mb-6">
-            <h1 class="text-3xl font-bold text-gray-900">Welcome back, {{ auth()->user()->first_name }}!</h1>
-            <p class="text-gray-600">Student ID: {{ auth()->user()->student_id }}</p>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                Hello, {{ auth()->user()->first_name }}! 👋
+            </h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">{{ auth()->user()->major }}</p>
         </div>
 
-        <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
-                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-5">
-                        <p class="text-gray-500 text-sm">Available Instructors</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ $availableInstructors }}</p>
-                    </div>
+        @foreach(['success','warning','info','error'] as $type)
+            @if(session($type))
+                <div class="rounded-lg p-3 mb-4 text-sm
+                    {{ $type === 'success' ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 text-green-800 dark:text-green-200' : '' }}
+                    {{ $type === 'warning' ? 'bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 text-yellow-800 dark:text-yellow-200' : '' }}
+                    {{ $type === 'error'   ? 'bg-red-50 dark:bg-red-900/30 border border-red-200 text-red-800 dark:text-red-200' : '' }}
+                    {{ $type === 'info'    ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 text-blue-800 dark:text-blue-200' : '' }}">
+                    {{ session($type) }}
                 </div>
-            </div>
+            @endif
+        @endforeach
 
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
-                        <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-5">
-                        <p class="text-gray-500 text-sm">Available Bays</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ $availableBays }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-purple-100 rounded-md p-3">
-                        <svg class="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-5">
-                        <p class="text-gray-500 text-sm">Available Vehicles</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ $availableVehicles }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Active Request -->
+        {{-- Active Request Banner --}}
         @if($activeRequest)
-            <div class="bg-white rounded-lg shadow mb-6">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-xl font-semibold text-gray-900">Active Request</h2>
-                </div>
-                <div class="p-6">
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1">
-                            <h3 class="text-lg font-medium text-gray-900">{{ $activeRequest->title ?? $activeRequest->category->name }}</h3>
-                            <p class="text-gray-600 mt-2">{{ $activeRequest->description }}</p>
-
-                            <div class="mt-4 grid grid-cols-2 gap-4">
-                                <div>
-                                    <p class="text-sm text-gray-500">Vehicle</p>
-                                    <p class="font-medium">{{ $activeRequest->vehicle->make }} {{ $activeRequest->vehicle->model }}</p>
-                                </div>
-                                @if($activeRequest->bay)
-                                    <div>
-                                        <p class="text-sm text-gray-500">Bay</p>
-                                        <p class="font-medium">{{ $activeRequest->bay->bay_number }}</p>
-                                    </div>
-                                @endif
-                                <div>
-                                    <p class="text-sm text-gray-500">Priority</p>
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                    @if($activeRequest->priority_level === 'emergency') bg-red-100 text-red-800
-                                    @elseif($activeRequest->priority_level === 'high') bg-orange-100 text-orange-800
-                                    @elseif($activeRequest->priority_level === 'medium') bg-yellow-100 text-yellow-800
-                                    @else bg-green-100 text-green-800
-                                    @endif">
-                                    {{ ucfirst($activeRequest->priority_level) }}
-                                </span>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-500">Status</p>
-                                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                    @if($activeRequest->status === 'pending') bg-yellow-100 text-yellow-800
-                                    @elseif($activeRequest->status === 'assigned') bg-blue-100 text-blue-800
-                                    @else bg-green-100 text-green-800
-                                    @endif">
-                                    {{ ucfirst($activeRequest->status) }}
-                                </span>
-                                </div>
-                            </div>
-
+            <div class="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-xl p-5 mb-6">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-yellow-700 dark:text-yellow-400 uppercase tracking-wide mb-1">🕐 Active Request</p>
+                        <p class="font-semibold text-gray-900 dark:text-white text-lg">{{ $activeRequest->title }}</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            {{ $activeRequest->classSection?->course_name }}
                             @if($activeRequest->assignedInstructor)
-                                <div class="mt-4 p-4 bg-blue-50 rounded-lg">
-                                    <p class="text-sm text-blue-800 font-medium">Assigned Instructor</p>
-                                    <p class="text-blue-900">{{ $activeRequest->assignedInstructor->first_name }} {{ $activeRequest->assignedInstructor->last_name }}</p>
-                                    <p class="text-sm text-blue-700">{{ $activeRequest->assignedInstructor->phone_number }}</p>
-                                </div>
-                            @elseif($queuePosition)
-                                <div class="mt-4 p-4 bg-yellow-50 rounded-lg">
-                                    <p class="text-sm text-yellow-800 font-medium">Queue Position</p>
-                                    <p class="text-2xl font-bold text-yellow-900">{{ $queuePosition->position }}</p>
-                                    @if($estimatedWaitTime)
-                                        <p class="text-sm text-yellow-700">Estimated wait: {{ $estimatedWaitTime }} minutes</p>
-                                    @endif
-                                </div>
+                                · Instructor: {{ $activeRequest->assignedInstructor->fullName() }}
                             @endif
-                        </div>
-
-                        <div class="ml-4 flex flex-col gap-2">
-                            <a href="{{ route('help-requests.show', $activeRequest) }}" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-center">
-                                View Details
-                            </a>
-                            @if($activeRequest->status === 'pending')
-                                <form method="POST" action="{{ route('help-requests.destroy', $activeRequest) }}" onsubmit="return confirm('Are you sure you want to cancel this request?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-                                        Cancel Request
-                                    </button>
-                                </form>
-                            @endif
-                        </div>
+                        </p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">📍 {{ $activeRequest->location }}</p>
+                    </div>
+                    <div class="flex flex-col gap-2 ml-4">
+                        <a href="{{ route('student.requests.show', $activeRequest) }}"
+                           class="px-3 py-1.5 bg-yellow-600 hover:bg-yellow-700 text-white text-xs font-medium rounded-lg transition text-center">
+                            View & Chat
+                        </a>
+                        <a href="{{ route('student.requests.cancel-form', $activeRequest) }}"
+                           class="px-3 py-1.5 border border-red-300 text-red-600 dark:border-red-600 dark:text-red-400 text-xs font-medium rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition text-center">
+                            Cancel
+                        </a>
                     </div>
                 </div>
             </div>
         @else
-            <div class="bg-white rounded-lg shadow mb-6 p-6 text-center">
-                <p class="text-gray-600 mb-4">You don't have any active requests</p>
-                <a href="{{ route('help-requests.create') }}" class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
-                    Create New Request
-                </a>
+            {{-- New Request CTA --}}
+            @if($enrolledSections->isNotEmpty())
+                <div class="bg-blue-600 rounded-xl p-6 mb-6 text-white flex items-center justify-between">
+                    <div>
+                        <p class="font-semibold text-lg">Need help?</p>
+                        <p class="text-blue-100 text-sm mt-0.5">Submit a request and your instructor will come to you.</p>
+                    </div>
+                    <a href="{{ route('student.requests.create') }}"
+                       class="px-5 py-2.5 bg-white text-blue-700 font-semibold text-sm rounded-lg hover:bg-blue-50 transition">
+                        Request Help
+                    </a>
+                </div>
+            @else
+                <div class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 mb-6 text-center">
+                    <p class="text-gray-500 dark:text-gray-400 text-sm">
+                        You are not enrolled in any active class sections yet. Ask your instructor to add you.
+                    </p>
+                </div>
+            @endif
+        @endif
+
+        {{-- Enrolled Sections --}}
+        @if($enrolledSections->isNotEmpty())
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5 mb-6">
+                <h2 class="font-semibold text-gray-900 dark:text-white mb-3">My Classes</h2>
+                <div class="space-y-2">
+                    @foreach($enrolledSections as $section)
+                        <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $section->course_name }}</p>
+                                <p class="text-xs text-gray-400">
+                                    {{ $section->course_code }} · {{ $section->semesterLabel() }} · {{ $section->instructor->fullName() }}
+                                </p>
+                            </div>
+                            <span class="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-full">Active</span>
+                        </div>
+                    @endforeach
+                </div>
             </div>
         @endif
 
-        <!-- Recent Requests -->
-        @if($requestHistory->count() > 0)
-            <div class="bg-white rounded-lg shadow">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-xl font-semibold text-gray-900">Recent Requests</h2>
+        {{-- Past Requests --}}
+        @if($pastRequests->isNotEmpty())
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="font-semibold text-gray-900 dark:text-white">Past Requests</h2>
+                    <a href="{{ route('student.my-requests') }}" class="text-xs text-blue-600 hover:underline">View all</a>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vehicle</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Instructor</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                        </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($requestHistory as $request)
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="text-sm font-medium text-gray-900">{{ $request->category->name }}</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $request->vehicle->make }} {{ $request->vehicle->model }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $request->assignedInstructor->first_name ?? 'N/A' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
-                                    {{ $request->status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                                    {{ ucfirst($request->status) }}
-                                </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {{ $request->created_at->format('M d, Y') }}
-                                </td>
-                            </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
+                <div class="space-y-2">
+                    @foreach($pastRequests as $req)
+                        <a href="{{ route('student.requests.show', $req) }}"
+                           class="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition border border-transparent hover:border-gray-200 dark:hover:border-gray-600">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $req->title }}</p>
+                                <p class="text-xs text-gray-400">
+                                    {{ $req->classSection?->course_code }} · {{ $req->created_at->format('M d, Y') }}
+                                </p>
+                            </div>
+                            <span class="text-xs px-2 py-0.5 rounded-full {{ $req->statusBadgeClass() }}">
+                                {{ $req->statusLabel() }}
+                            </span>
+                        </a>
+                    @endforeach
                 </div>
             </div>
         @endif

@@ -3,199 +3,332 @@
 namespace App\Http\Controllers;
 
 use App\Models\HelpRequest;
-use App\Models\Vehicle;
-use App\Models\Bay;
-use App\Models\RequestCategory;
+use App\Models\ClassSection;
 use App\Services\RequestAssignmentService;
+use App\Services\TwilioService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Storage;
 
 class HelpRequestController extends Controller
 {
-    use AuthorizesRequests;
-    protected $assignmentService;
+    public function __construct(
+        protected RequestAssignmentService $assignmentService,
+        protected TwilioService $twilio,
+    ) {}
 
-    public function __construct(RequestAssignmentService $assignmentService)
-    {
-        $this->assignmentService = $assignmentService;
-    }
-
-    public function index()
-    {
-        $user = Auth::user();
-
-        if ($user->role === 'student') {
-            return redirect()->route('student.dashboard');
-        }
-
-        return redirect()->route('instructor.dashboard');
-    }
+    // -------------------------------------------------------------------------
+    // Student: Create request
+    // -------------------------------------------------------------------------
 
     public function create()
     {
-        $this->authorize('create', HelpRequest::class);
-
         $user = Auth::user();
 
-        // Check if student already has an active request
-        $activeRequest = HelpRequest::where('student_id', $user->id)
-            ->whereIn('status', ['pending', 'assigned', 'in_progress'])
-            ->exists();
+        // Enforce one active request at a time
+        $existing = HelpRequest::where('student_id', $user->id)
+            ->where('status', 'pending')
+            ->first();
 
-        if ($activeRequest) {
-            return back()->with('error', 'You already have an active request. Please complete or cancel it first.');
+        if ($existing) {
+            return redirect()->route('student.dashboard')
+                ->with('warning', 'You already have an active help request. Please cancel it before submitting a new one.');
         }
 
-        $vehicles = Vehicle::where('school_id', $user->school_id)
-            ->where('status', 'available')
+        // Get active sessions this student is enrolled in
+        $sessions = $user->enrolledSessions()
+            ->where('is_active', true)
+            ->with('instructor')
             ->get();
 
-        $bays = Bay::where('school_id', $user->school_id)
-            ->where('status', 'available')
-            ->get();
+        if ($sessions->isEmpty()) {
+            return redirect()->route('student.dashboard')
+                ->with('warning', 'You are not enrolled in any active class sections. Please ask your instructor to add you.');
+        }
 
-        $categories = RequestCategory::where('is_active', true)->get();
-
-        return view('help-requests.create', compact('vehicles', 'bays', 'categories'));
+        return view('help-requests.create', compact('sessions'));
     }
 
     public function store(Request $request)
     {
-        $this->authorize('create', HelpRequest::class);
-
-        $validated = $request->validate([
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'bay_id' => 'nullable|exists:bays,id',
-            'category_id' => 'required|exists:request_categories,id',
-            'title' => 'nullable|string|max:255',
-            'description' => 'required|string|max:1000',
-            'priority_level' => 'required|in:low,medium,high,emergency',
-        ]);
-
         $user = Auth::user();
 
-        // Create help request
-        $helpRequest = DB::transaction(function () use ($validated, $user) {
-            $helpRequest = HelpRequest::create([
-                'student_id' => $user->id,
-                'vehicle_id' => $validated['vehicle_id'],
-                'bay_id' => $validated['bay_id'],
-                'category_id' => $validated['category_id'],
-                'title' => $validated['title'],
-                'description' => $validated['description'],
-                'priority_level' => $validated['priority_level'],
-                'status' => 'pending',
-            ]);
+        // One-request guard
+        $existing = HelpRequest::where('student_id', $user->id)
+            ->where('status', 'pending')
+            ->first();
 
-            // Update bay status if selected
-            if ($validated['bay_id']) {
-                Bay::where('id', $validated['bay_id'])->update(['status' => 'occupied']);
-            }
+        if ($existing) {
+            return redirect()->route('student.dashboard')
+                ->with('warning', 'You already have an active help request.');
+        }
 
-            // Update vehicle status
-            Vehicle::where('id', $validated['vehicle_id'])->update(['status' => 'in_use']);
+        $validated = $request->validate([
+            'class_session_id' => 'required|exists:class_sessions,id',
+            'title'            => 'required|string|max:255',
+            'description'      => 'required|string|max:2000',
+            'location'         => 'required|string|max:255',
+            'image'            => 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120',
+        ]);
 
-            return $helpRequest;
-        });
+        // Confirm student is enrolled in the chosen session
+        $session = ClassSection::findOrFail($validated['class_session_id']);
+        $enrolled = $session->students()->where('student_id', $user->id)->exists();
 
-        // Attempt auto-assignment
+        if (!$enrolled) {
+            return back()->withErrors(['class_section_id' => 'You are not enrolled in this section.']);
+        }
+
+        // Handle image upload
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('request-images', 'public');
+        }
+
+        $helpRequest = HelpRequest::create([
+            'student_id'       => $user->id,
+            'class_section_id' => $validated['class_section_id'],
+            'title'            => $validated['title'],
+            'description'      => $validated['description'],
+            'location'         => $validated['location'],
+            'image'            => $imagePath,
+            'status'           => 'pending',
+        ]);
+
+        // Assign instructor from session and fire SMS
         $this->assignmentService->assignInstructor($helpRequest);
 
         return redirect()->route('student.dashboard')
-            ->with('success', 'Help request created successfully! An instructor will be assigned shortly.');
+            ->with('success', 'Help request submitted! Your instructor has been notified.');
     }
+
+    // -------------------------------------------------------------------------
+    // Shared: View request
+    // -------------------------------------------------------------------------
 
     public function show(HelpRequest $helpRequest)
     {
-        $this->authorize('view', $helpRequest);
+        $this->authorizeAccess($helpRequest);
 
         $helpRequest->load([
             'student',
             'assignedInstructor',
-            'vehicle',
-            'bay',
-            'category',
+            'classSession.instructor',
             'comments.user',
-            'attachments',
-            'rating',
-            'queuePosition'
         ]);
 
         return view('help-requests.show', compact('helpRequest'));
     }
 
-    public function update(Request $request, HelpRequest $helpRequest)
+    // -------------------------------------------------------------------------
+    // Student: Edit request (pending only)
+    // -------------------------------------------------------------------------
+
+    public function edit(HelpRequest $helpRequest)
     {
-        $this->authorize('update', $helpRequest);
+        $this->authorizeStudentOwns($helpRequest);
 
-        $validated = $request->validate([
-            'status' => 'required|in:assigned,in_progress,completed,cancelled',
-            'resolution_notes' => 'nullable|string',
-        ]);
+        if ($helpRequest->status !== 'pending') {
+            return back()->with('error', 'You can only edit a pending request.');
+        }
 
-        DB::transaction(function () use ($helpRequest, $validated) {
-            $oldStatus = $helpRequest->status;
+        $sessions = Auth::user()->enrolledSessions()
+            ->where('is_active', true)
+            ->with('instructor')
+            ->get();
 
-            $helpRequest->update($validated);
-
-            // Update timestamps based on status
-            if ($validated['status'] === 'in_progress' && $oldStatus !== 'in_progress') {
-                $helpRequest->update(['started_at' => now()]);
-            }
-
-            if ($validated['status'] === 'completed') {
-                $helpRequest->update(['completed_at' => now()]);
-
-                // Free up resources
-                if ($helpRequest->bay_id) {
-                    Bay::where('id', $helpRequest->bay_id)->update(['status' => 'available']);
-                }
-                Vehicle::where('id', $helpRequest->vehicle_id)->update(['status' => 'available']);
-            }
-
-            if ($validated['status'] === 'cancelled') {
-                $helpRequest->update(['cancelled_at' => now()]);
-
-                // Free up resources
-                if ($helpRequest->bay_id) {
-                    Bay::where('id', $helpRequest->bay_id)->update(['status' => 'available']);
-                }
-                Vehicle::where('id', $helpRequest->vehicle_id)->update(['status' => 'available']);
-            }
-
-            // Log activity
-            $helpRequest->activityLogs()->create([
-                'user_id' => Auth::id(),
-                'action' => 'status_updated',
-                'description' => "Status changed from {$oldStatus} to {$validated['status']}",
-                'old_values' => ['status' => $oldStatus],
-                'new_values' => ['status' => $validated['status']],
-            ]);
-        });
-
-        return back()->with('success', 'Request updated successfully!');
+        return view('help-requests.edit', compact('helpRequest', 'sessions'));
     }
 
-    public function destroy(HelpRequest $helpRequest)
+    public function update(Request $request, HelpRequest $helpRequest)
     {
-        $this->authorize('delete', $helpRequest);
+        $this->authorizeStudentOwns($helpRequest);
 
-        DB::transaction(function () use ($helpRequest) {
-            // Free up resources
-            if ($helpRequest->bay_id) {
-                Bay::where('id', $helpRequest->bay_id)->update(['status' => 'available']);
+        if ($helpRequest->status !== 'pending') {
+            return back()->with('error', 'You can only edit a pending request.');
+        }
+
+        $validated = $request->validate([
+            'title'       => 'required|string|max:255',
+            'description' => 'required|string|max:2000',
+            'location'    => 'required|string|max:255',
+            'image'       => 'nullable|image|mimes:jpg,jpeg,png,gif|max:5120',
+        ]);
+
+        // Replace image if new one uploaded
+        if ($request->hasFile('image')) {
+            if ($helpRequest->image) {
+                Storage::disk('public')->delete($helpRequest->image);
             }
-            Vehicle::where('id', $helpRequest->vehicle_id)->update(['status' => 'available']);
+            $validated['image'] = $request->file('image')->store('request-images', 'public');
+        }
 
-            $helpRequest->update([
-                'status' => 'cancelled',
-                'cancelled_at' => now(),
-            ]);
-        });
+        $helpRequest->update($validated);
+
+        return redirect()->route('help-requests.show', $helpRequest)
+            ->with('success', 'Request updated successfully.');
+    }
+
+    // -------------------------------------------------------------------------
+    // Student: Cancel request
+    // -------------------------------------------------------------------------
+
+    public function cancelForm(HelpRequest $helpRequest)
+    {
+        $this->authorizeStudentOwns($helpRequest);
+
+        if ($helpRequest->status !== 'pending') {
+            return back()->with('error', 'This request cannot be cancelled.');
+        }
+
+        return view('help-requests.cancel', compact('helpRequest'));
+    }
+
+    public function cancel(Request $request, HelpRequest $helpRequest)
+    {
+        $this->authorizeStudentOwns($helpRequest);
+
+        if ($helpRequest->status !== 'pending') {
+            return back()->with('error', 'This request cannot be cancelled.');
+        }
+
+        $request->validate([
+            'cancellation_reason' => 'nullable|string|max:500',
+        ]);
+
+        $helpRequest->update([
+            'status'              => 'cancelled',
+            'cancelled_at'        => now(),
+            'cancellation_reason' => $request->cancellation_reason,
+        ]);
+
+        // Notify instructor via SMS
+        $instructor = $helpRequest->assignedInstructor;
+        if ($instructor && $instructor->phone_number) {
+            $this->twilio->notifyInstructorRequestCancelledByStudent(
+                $instructor->phone_number,
+                Auth::user()->fullName(),
+            );
+        }
 
         return redirect()->route('student.dashboard')
-            ->with('success', 'Request cancelled successfully!');
+            ->with('success', 'Your help request has been cancelled.');
+    }
+
+    // -------------------------------------------------------------------------
+    // Instructor: Mark complete / Cancel
+    // -------------------------------------------------------------------------
+
+    public function markComplete(Request $request, HelpRequest $helpRequest)
+    {
+        $this->authorizeInstructorOwns($helpRequest);
+
+        $request->validate([
+            'resolution_notes' => 'nullable|string|max:1000',
+        ]);
+
+        $helpRequest->update([
+            'status'           => 'completed',
+            'completed_at'     => now(),
+            'resolution_notes' => $request->resolution_notes,
+        ]);
+
+        // Notify student
+        $student = $helpRequest->student;
+        if ($student->phone_number) {
+            $this->twilio->notifyStudentRequestCompleted(
+                $student->phone_number,
+                Auth::user()->fullName(),
+            );
+        }
+
+        return redirect()->route('instructor.dashboard')
+            ->with('success', 'Request marked as complete.');
+    }
+
+    public function instructorCancel(Request $request, HelpRequest $helpRequest)
+    {
+        $this->authorizeInstructorOwns($helpRequest);
+
+        if ($helpRequest->status !== 'pending') {
+            return back()->with('error', 'This request cannot be cancelled.');
+        }
+
+        $request->validate([
+            'cancellation_reason' => 'nullable|string|max:500',
+        ]);
+
+        $helpRequest->update([
+            'status'              => 'cancelled',
+            'cancelled_at'        => now(),
+            'cancellation_reason' => $request->cancellation_reason,
+        ]);
+
+        // Notify student
+        $student = $helpRequest->student;
+        if ($student->phone_number) {
+            $this->twilio->notifyStudentRequestCancelledByInstructor(
+                $student->phone_number,
+                Auth::user()->fullName(),
+            );
+        }
+
+        return redirect()->route('instructor.dashboard')
+            ->with('success', 'Request cancelled.');
+    }
+
+    // -------------------------------------------------------------------------
+    // Comments polling endpoint (near real-time)
+    // -------------------------------------------------------------------------
+
+    public function pollComments(HelpRequest $helpRequest)
+    {
+        $this->authorizeAccess($helpRequest);
+
+        $comments = $helpRequest->comments()
+            ->with('user:id,first_name,last_name,role,profile_photo')
+            ->get()
+            ->map(fn($c) => [
+                'id'         => $c->id,
+                'message'    => $c->message,
+                'user'       => [
+                    'id'        => $c->user->id,
+                    'name'      => $c->user->fullName(),
+                    'role'      => $c->user->role,
+                    'is_me'     => $c->user_id === Auth::id(),
+                    'avatar'    => $c->user->profile_photo
+                        ? asset('storage/' . $c->user->profile_photo)
+                        : null,
+                ],
+                'created_at' => $c->created_at->diffForHumans(),
+                'raw_time'   => $c->created_at->toISOString(),
+            ]);
+
+        return response()->json($comments);
+    }
+
+    // -------------------------------------------------------------------------
+    // Auth helpers
+    // -------------------------------------------------------------------------
+
+    private function authorizeAccess(HelpRequest $helpRequest): void
+    {
+        $user = Auth::user();
+        $allowed = $user->role === 'admin'
+            || $helpRequest->student_id === $user->id
+            || $helpRequest->assigned_instructor_id === $user->id;
+
+        abort_if(!$allowed, 403);
+    }
+
+    private function authorizeStudentOwns(HelpRequest $helpRequest): void
+    {
+        abort_if($helpRequest->student_id !== Auth::id(), 403);
+    }
+
+    private function authorizeInstructorOwns(HelpRequest $helpRequest): void
+    {
+        abort_if($helpRequest->assigned_instructor_id !== Auth::id(), 403);
     }
 }

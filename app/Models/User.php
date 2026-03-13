@@ -12,7 +12,6 @@ class User extends Authenticatable
     use Notifiable, HasRoles, SoftDeletes;
 
     protected $fillable = [
-        'school_id',
         'first_name',
         'last_name',
         'email',
@@ -20,7 +19,9 @@ class User extends Authenticatable
         'phone_number',
         'password',
         'role',
-        'is_available',
+        'major',
+        'department',
+        'badge_photo',
         'student_id',
         'instructor_id',
         'profile_photo',
@@ -30,8 +31,6 @@ class User extends Authenticatable
         'rejection_reason',
         'approved_at',
         'approved_by',
-        'bio',
-        'privacy_settings',
     ];
 
     protected $hidden = [
@@ -40,30 +39,15 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'email_verified_at' => 'datetime',
-        'is_available' => 'boolean',
-        'password' => 'hashed',
-        'verification_code_expires_at' => 'datetime',
-        'approved_at' => 'datetime',
-        'privacy_settings' => 'array',
+        'email_verified_at'             => 'datetime',
+        'password'                      => 'hashed',
+        'verification_code_expires_at'  => 'datetime',
+        'approved_at'                   => 'datetime',
     ];
 
-    // Relationships
-
-    public function settings()
-    {
-        return $this->hasOne(UserSettings::class);
-    }
-
-    public function approver()
-    {
-        return $this->belongsTo(User::class, 'approved_by');
-    }
-
-    public function approvedUsers()
-    {
-        return $this->hasMany(User::class, 'approved_by');
-    }
+    // -------------------------------------------------------------------------
+    // Scopes
+    // -------------------------------------------------------------------------
 
     public function scopeApproved($query)
     {
@@ -75,18 +59,62 @@ class User extends Authenticatable
         return $query->where('approval_status', 'pending');
     }
 
-    public function isEmailVerified()
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    public function isEmailVerified(): bool
     {
         return !is_null($this->email_verified_at);
     }
 
-    public function isApproved()
+    public function isApproved(): bool
     {
         return $this->approval_status === 'approved';
     }
-    public function school()
+
+    public function fullName(): string
     {
-        return $this->belongsTo(School::class);
+        return "{$this->first_name} {$this->last_name}";
+    }
+
+    public function departmentLabel(): string
+    {
+        return match($this->department) {
+            'business_it'       => 'Business & IT',
+            'liberal_arts'      => 'Liberal Arts',
+            'science'           => 'Science',
+            'health_sciences'   => 'Health Sciences',
+            'trades_technology' => 'Trades & Technology',
+            'arts_humanities'   => 'Arts & Humanities',
+            default             => ucfirst($this->department ?? ''),
+        };
+    }
+
+    // -------------------------------------------------------------------------
+    // Relationships
+    // -------------------------------------------------------------------------
+
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    // Student — class sessions they are enrolled in
+    public function enrolledSections()
+    {
+        return $this->belongsToMany(
+            ClassSection::class,
+            'class_section_students',
+            'student_id',
+            'class_section_id'
+        )->withTimestamps();
+    }
+
+    // Instructor — class sessions they own
+    public function classSections()
+    {
+        return $this->hasMany(ClassSection::class, 'instructor_id');
     }
 
     public function helpRequestsAsStudent()
@@ -104,28 +132,18 @@ class User extends Authenticatable
         return $this->hasMany(Comment::class);
     }
 
-    public function ratingsGiven()
-    {
-        return $this->hasMany(Rating::class, 'student_id');
-    }
-
-    public function ratingsReceived()
-    {
-        return $this->hasMany(Rating::class, 'instructor_id');
-    }
-
     public function notifications()
     {
         return $this->hasMany(Notification::class);
     }
 
-    public function notificationPreferences()
-    {
-        return $this->hasOne(NotificationPreference::class);
-    }
-
     public function activityLogs()
     {
         return $this->hasMany(ActivityLog::class);
+    }
+
+    public function settings()
+    {
+        return $this->hasOne(UserSettings::class);
     }
 }

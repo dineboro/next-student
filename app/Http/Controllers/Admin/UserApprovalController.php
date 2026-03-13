@@ -4,21 +4,22 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\TwilioService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class UserApprovalController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(['auth', 'role:admin']);
-    }
+    public function __construct(protected TwilioService $twilio) {}
 
+    /**
+     * List instructors pending approval (email already verified).
+     */
     public function pending()
     {
-        $users = User::where('approval_status', 'pending')
-            ->where('email_verified_at', '!=', null)
-            ->with('school')
+        $users = User::where('role', 'instructor')
+            ->where('approval_status', 'pending')
+            ->whereNotNull('email_verified_at')
             ->latest()
             ->paginate(20);
 
@@ -29,13 +30,21 @@ class UserApprovalController extends Controller
     {
         $user->update([
             'approval_status' => 'approved',
-            'approved_at' => now(),
-            'approved_by' => Auth::id(),
+            'approved_at'     => now(),
+            'approved_by'     => Auth::id(),
         ]);
 
-        // TODO: Send approval email to user
+        // SMS the instructor
+        if ($user->phone_number) {
+            $this->twilio->send(
+                $user->phone_number,
+                "Kirkwood Help System: Your instructor account has been approved! You can now log in at " . config('app.url')
+            );
+        }
 
-        return back()->with('success', "User {$user->first_name} {$user->last_name} has been approved!");
+        // TODO: Send approval email
+
+        return back()->with('success', "{$user->fullName()} has been approved as an instructor.");
     }
 
     public function reject(Request $request, User $user)
@@ -45,13 +54,13 @@ class UserApprovalController extends Controller
         ]);
 
         $user->update([
-            'approval_status' => 'rejected',
+            'approval_status'  => 'rejected',
             'rejection_reason' => $validated['rejection_reason'],
-            'approved_by' => Auth::id(),
+            'approved_by'      => Auth::id(),
         ]);
 
-        // TODO: Send rejection email to user with reason
+        // TODO: Send rejection email with reason
 
-        return back()->with('success', "User {$user->first_name} {$user->last_name} has been rejected.");
+        return back()->with('success', "{$user->fullName()} has been rejected.");
     }
 }

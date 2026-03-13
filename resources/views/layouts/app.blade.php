@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' || false }"
       :class="{ 'dark': darkMode }">
@@ -6,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'NextStudent - Auto Shop Helper')</title>
+    <title>@yield('title', 'NextStudent - Kirkwood Help')</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -25,23 +24,21 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
 
-<!-- Enhanced Navigation -->
+<!-- Navigation -->
 <nav class="bg-white dark:bg-gray-800 shadow-lg transition-colors duration-200"
      x-data="{
-             mobileMenuOpen: false,
-             notificationsOpen: false,
-             profileOpen: false,
-             unreadNotifications: 3
-         }">
+         mobileMenuOpen: false,
+         unreadNotifications: 0
+     }">
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
+
             <!-- Logo and primary nav -->
             <div class="flex">
                 <div class="flex-shrink-0 flex items-center">
-                    <a href="{{ auth()->check() ? (auth()->user()->role === 'student' ? route('student.dashboard') : route('instructor.dashboard')) : '/' }}"
+                    <a href="{{ auth()->check() ? (auth()->user()->role === 'student' ? route('student.dashboard') : (auth()->user()->role === 'admin' ? route('admin.dashboard') : route('instructor.dashboard'))) : '/' }}"
                        class="text-xl font-bold text-gray-800 dark:text-white flex items-center">
-                        <span class="text-2xl mr-2">🔧</span>
                         <span class="hidden sm:block">NextStudent</span>
                     </a>
                 </div>
@@ -52,12 +49,13 @@
                         @if(auth()->user()->role === 'admin')
                             <a href="{{ route('admin.dashboard') }}"
                                class="border-transparent text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-gray-900 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition">
-                                Admin Dashboard
+                                Dashboard
                             </a>
-                            <a href="{{ route('admin.school-requests.pending') }}"
+                            <a href="{{ route('admin.users.pending') }}"
                                class="border-transparent text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-gray-900 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition">
-                                School Requests
+                                Pending Approvals
                             </a>
+
                         @elseif(auth()->user()->role === 'student')
                             <a href="{{ route('student.dashboard') }}"
                                class="border-transparent text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-gray-900 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition">
@@ -67,22 +65,20 @@
                                class="border-transparent text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-gray-900 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition">
                                 My Requests
                             </a>
-                            <a href="{{ route('help-requests.create') }}"
+                            <a href="{{ route('student.requests.create') }}"
                                class="border-transparent text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-gray-900 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition">
-                                New Request
+                                Request Help
                             </a>
+
                         @else
+                            {{-- Instructor --}}
                             <a href="{{ route('instructor.dashboard') }}"
                                class="border-transparent text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-gray-900 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition">
                                 Dashboard
                             </a>
-                            <a href="{{ route('instructor.active-requests') }}"
+                            <a href="{{ route('instructor.sections.index') }}"
                                class="border-transparent text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-gray-900 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition">
-                                Active Requests
-                            </a>
-                            <a href="{{ route('instructor.instructors-list') }}"
-                               class="border-transparent text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-gray-900 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition">
-                                Instructors
+                                My Sections
                             </a>
                             <a href="{{ route('instructor.history') }}"
                                class="border-transparent text-gray-600 dark:text-gray-300 hover:border-blue-500 hover:text-gray-900 dark:hover:text-white inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition">
@@ -93,7 +89,7 @@
                 @endauth
             </div>
 
-            <!-- Right side - Dark Mode, Notifications, Profile -->
+            <!-- Right side -->
             <div class="flex items-center space-x-4">
                 @auth
                     <!-- Dark Mode Toggle -->
@@ -114,10 +110,6 @@
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                             </svg>
-                            <!-- Notification Badge -->
-                            <span x-show="unreadNotifications > 0"
-                                  class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full"
-                                  x-text="unreadNotifications"></span>
                         </button>
 
                         <!-- Notifications Dropdown -->
@@ -128,44 +120,21 @@
                             <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                                 <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
                             </div>
-                            <div class="max-h-96 overflow-y-auto">
-                                <!-- Sample Notifications -->
-                                <a href="#" class="block px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                                    <div class="flex items-start">
-                                        <div class="flex-shrink-0">
-                                            <div class="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
-                                        </div>
-                                        <div class="ml-3 flex-1">
-                                            <p class="text-sm text-gray-900 dark:text-white">New request assigned</p>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">5 minutes ago</p>
-                                        </div>
-                                    </div>
-                                </a>
-                                <div class="px-4 py-3 text-center text-sm text-gray-500 dark:text-gray-400">
-                                    No more notifications
-                                </div>
-                            </div>
-                            <div class="px-4 py-3 border-t border-gray-200 dark:border-gray-700 text-center">
-                                <a href="#" class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">View all notifications</a>
+                            <div class="px-4 py-6 text-center text-sm text-gray-400 dark:text-gray-500">
+                                No new notifications
                             </div>
                         </div>
                     </div>
 
                     <!-- Profile Dropdown -->
                     <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open"
-                                class="flex items-center space-x-3 focus:outline-none">
+                        <button @click="open = !open" class="flex items-center space-x-3 focus:outline-none">
                             <div class="hidden md:block text-right">
                                 <p class="text-sm font-medium text-gray-900 dark:text-white">
                                     {{ auth()->user()->first_name }} {{ auth()->user()->last_name }}
                                 </p>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">
                                     {{ ucfirst(auth()->user()->role) }}
-                                    @if(auth()->user()->role === 'instructor')
-                                        <span class="ml-1 px-2 py-0.5 text-xs rounded {{ auth()->user()->is_available ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
-                                                {{ auth()->user()->is_available ? 'Available' : 'Unavailable' }}
-                                            </span>
-                                    @endif
                                 </p>
                             </div>
                             <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
@@ -204,19 +173,6 @@
                                     </svg>
                                     Settings
                                 </a>
-
-                                @if(auth()->user()->role === 'instructor')
-                                    <form method="POST" action="{{ route('instructor.toggle-availability') }}" class="w-full">
-                                        @csrf
-                                        <button type="submit"
-                                                class="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition text-left">
-                                            <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                            {{ auth()->user()->is_available ? 'Mark Unavailable' : 'Mark Available' }}
-                                        </button>
-                                    </form>
-                                @endif
                             </div>
 
                             <div class="py-1 border-t border-gray-200 dark:border-gray-700">
@@ -242,6 +198,7 @@
                             <path x-show="mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
+
                 @else
                     <a href="{{ route('login') }}"
                         @class([
@@ -251,7 +208,6 @@
                         ])>
                         Login
                     </a>
-
                     <a href="{{ route('register') }}"
                         @class([
                             'text-sm px-4 py-2 rounded transition',
@@ -271,14 +227,16 @@
              x-transition
              class="md:hidden border-t border-gray-200 dark:border-gray-700">
             <div class="pt-2 pb-3 space-y-1">
-                @if(auth()->user()->role === 'student')
+                @if(auth()->user()->role === 'admin')
+                    <a href="{{ route('admin.dashboard') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Dashboard</a>
+                    <a href="{{ route('admin.users.pending') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Pending Approvals</a>
+                @elseif(auth()->user()->role === 'student')
                     <a href="{{ route('student.dashboard') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Dashboard</a>
                     <a href="{{ route('student.my-requests') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">My Requests</a>
-                    <a href="{{ route('help-requests.create') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">New Request</a>
+                    <a href="{{ route('student.requests.create') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Request Help</a>
                 @else
                     <a href="{{ route('instructor.dashboard') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Dashboard</a>
-                    <a href="{{ route('instructor.active-requests') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Active Requests</a>
-                    <a href="{{ route('instructor.instructors-list') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">Instructors</a>
+                    <a href="{{ route('instructor.sections.index') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">My Sections</a>
                     <a href="{{ route('instructor.history') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">History</a>
                 @endif
             </div>
@@ -303,6 +261,22 @@
     </div>
 @endif
 
+@if(session('warning'))
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        <div class="bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 dark:border-yellow-700 text-yellow-700 dark:text-yellow-200 px-4 py-3 rounded relative" role="alert">
+            <span class="block sm:inline">{{ session('warning') }}</span>
+        </div>
+    </div>
+@endif
+
+@if(session('info'))
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        <div class="bg-blue-100 dark:bg-blue-900 border border-blue-400 dark:border-blue-700 text-blue-700 dark:text-blue-200 px-4 py-3 rounded relative" role="alert">
+            <span class="block sm:inline">{{ session('info') }}</span>
+        </div>
+    </div>
+@endif
+
 <!-- Main Content -->
 <main class="py-6">
     @yield('content')
@@ -312,7 +286,7 @@
 <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-12 transition-colors duration-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <p class="text-center text-sm text-gray-500 dark:text-gray-400">
-            © {{ date('Y') }} NextStudent. All rights reserved.
+            © {{ date('Y') }} NextStudent — Kirkwood Community College. All rights reserved.
         </p>
     </div>
 </footer>

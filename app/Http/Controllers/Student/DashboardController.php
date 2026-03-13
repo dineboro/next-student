@@ -4,77 +4,47 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Models\HelpRequest;
-use App\Models\Vehicle;
-use App\Models\Bay;
-use App\Models\RequestCategory;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth', 'role:student']);
+    }
 
     public function index()
     {
         $user = Auth::user();
 
-        // Get active request (if any)
-        $activeRequest = HelpRequest::with(['vehicle', 'bay', 'category', 'assignedInstructor'])
-            ->where('student_id', $user->id)
-            ->whereIn('status', ['pending', 'assigned', 'in_progress'])
-            ->latest()
+        $activeRequest = HelpRequest::where('student_id', $user->id)
+            ->where('status', 'pending')
+            ->with(['assignedInstructor', 'classSection'])
             ->first();
 
-        // Get queue position if request is pending
-        $queuePosition = null;
-        $estimatedWaitTime = null;
-        if ($activeRequest && $activeRequest->status === 'pending') {
-            $queuePosition = $activeRequest->queuePosition;
-            if ($queuePosition) {
-                $estimatedWaitTime = $queuePosition->estimated_wait_minutes;
-            }
-        }
-
-        // Get request history
-        $requestHistory = HelpRequest::with(['vehicle', 'category', 'assignedInstructor'])
-            ->where('student_id', $user->id)
+        $pastRequests = HelpRequest::where('student_id', $user->id)
             ->whereIn('status', ['completed', 'cancelled'])
+            ->with(['assignedInstructor', 'classSection'])
             ->latest()
-            ->limit(5)
+            ->limit(10)
             ->get();
 
-        // Get available resources
-        $availableVehicles = Vehicle::where('school_id', $user->school_id)
-            ->where('status', 'available')
-            ->count();
+        $enrolledSections = $user->enrolledSections()
+            ->where('is_active', true)
+            ->with('instructor')
+            ->get();
 
-        $availableBays = Bay::where('school_id', $user->school_id)
-            ->where('status', 'available')
-            ->count();
-
-        $availableInstructors = \App\Models\User::where('school_id', $user->school_id)
-            ->where('role', 'instructor')
-            ->where('is_available', true)
-            ->count();
-
-        return view('student.dashboard', compact(
-            'activeRequest',
-            'queuePosition',
-            'estimatedWaitTime',
-            'requestHistory',
-            'availableVehicles',
-            'availableBays',
-            'availableInstructors'
-        ));
+        return view('student.dashboard', compact('activeRequest', 'pastRequests', 'enrolledSections'));
     }
 
     public function myRequests()
     {
         $user = Auth::user();
 
-        $requests = HelpRequest::with(['vehicle', 'bay', 'category', 'assignedInstructor', 'rating'])
-            ->where('student_id', $user->id)
+        $requests = HelpRequest::where('student_id', $user->id)
+            ->with(['assignedInstructor', 'classSection'])
             ->latest()
-            ->paginate(10);
+            ->paginate(15);
 
         return view('student.my-requests', compact('requests'));
     }

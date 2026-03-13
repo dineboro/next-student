@@ -4,48 +4,32 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\School;
-use App\Models\SchoolRegistrationRequest;
 use App\Models\HelpRequest;
 
 class AdminDashboardController extends Controller
 {
-    // Removed the __construct() method since middleware is handled in web.php
-
     public function index()
     {
         $stats = [
-            'pending_users' => User::where('approval_status', 'pending')->count(),
-            'pending_schools' => 0, // Default to 0
-            'total_users' => User::where('approval_status', 'approved')->count(),
-            'total_schools' => School::where('approval_status', 'approved')->count(),
-            'active_requests' => HelpRequest::whereIn('status', ['pending', 'assigned', 'in_progress'])->count(),
+            'pending_instructors' => User::where('role', 'instructor')
+                ->where('approval_status', 'pending')
+                ->whereNotNull('email_verified_at')
+                ->count(),
+            'total_students'      => User::where('role', 'student')->where('approval_status', 'approved')->count(),
+            'total_instructors'   => User::where('role', 'instructor')->where('approval_status', 'approved')->count(),
+            'active_requests'     => HelpRequest::where('status', 'pending')->count(),
+            'completed_today'     => HelpRequest::where('status', 'completed')
+                ->whereDate('completed_at', today())
+                ->count(),
         ];
 
-        // Safely try to get pending schools
-        try {
-            $stats['pending_schools'] = SchoolRegistrationRequest::where('status', 'pending')->count();
-        } catch (\Exception $e) {
-            \Log::warning('school_registration_requests table not found');
-        }
-
-        $recentUsers = User::where('approval_status', 'pending')
-            ->with('school')
+        $pendingInstructors = User::where('role', 'instructor')
+            ->where('approval_status', 'pending')
+            ->whereNotNull('email_verified_at')
             ->latest()
             ->limit(5)
             ->get();
 
-        // Safely try to get recent schools
-        $recentSchools = collect([]);
-        try {
-            $recentSchools = SchoolRegistrationRequest::where('status', 'pending')
-                ->latest()
-                ->limit(5)
-                ->get();
-        } catch (\Exception $e) {
-            \Log::warning('school_registration_requests table not found');
-        }
-
-        return view('admin.dashboard', compact('stats', 'recentUsers', 'recentSchools'));
+        return view('admin.dashboard', compact('stats', 'pendingInstructors'));
     }
 }

@@ -2,88 +2,73 @@
 
 namespace App\Services;
 
+use App\Models\ClassSection;
 use App\Models\HelpRequest;
-use App\Models\User;
 use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class RequestAssignmentService
 {
-    public function assignInstructor(HelpRequest $helpRequest)
-    {
-        // Find available instructor with least workload
-        $instructor = $this->findBestInstructor($helpRequest);
+    public function __construct(protected TwilioService $twilio) {}
 
-        if (!$instructor) {
-            // No available instructors - add to queue
-            $this->addToQueue($helpRequest);
+    /**
+     * Given a newly created HelpRequest, find the instructor via the
+     * class session and assign the request.
+     *
+     * Returns true on success, false if no instructor could be found.
+     */
+    public function assignInstructor(HelpRequest $helpRequest): bool
+    {
+        $session = ClassSection::with('instructor')->find($helpRequest->class_session_id);
+
+        if (!$session || !$session->instructor) {
             return false;
         }
+
+        $instructor = $session->instructor;
 
         DB::transaction(function () use ($helpRequest, $instructor) {
             $helpRequest->update([
                 'assigned_instructor_id' => $instructor->id,
-                'status' => 'assigned',
-                'assigned_at' => now(),
             ]);
 
-            // Remove from queue if exists
-            $helpRequest->queuePosition?->delete();
+            // In-app notification
+            Notification::create([
+                'user_id'         => $instructor->id,
+                'help_request_id' => $helpRequest->id,
+                'type'            => 'in_app',
+                'title'           => 'New Help Request',
+                'message'         => "{$helpRequest->student->fullName()} needs help: {$helpRequest->title}",
+                'sent_at'         => now(),
+            ]);
 
-            // Create notification for instructor
-            $this->notifyInstructor($instructor, $helpRequest);
-
-            // Log activity
+            // Activity log
             $helpRequest->activityLogs()->create([
-                'user_id' => null,
-                'action' => 'instructor_assigned',
-                'description' => "Assigned to instructor {$instructor->first_name} {$instructor->last_name}",
-                'new_values' => ['assigned_instructor_id' => $instructor->id],
+                'user_id'     => null,
+                'action'      => 'instructor_assigned',
+                'description' => "Auto-assigned to {$instructor->fullName()} via session {$helpRequest->classSession->course_code}",
             ]);
         });
 
+        // SMS (outside transaction — failure should not roll back the assignment)
+        if ($instructor->phone_number) {
+            $this->twilio->notifyInstructorNewRequest(
+                $instructor->phone_number,
+                $helpRequest->student->fullName(),
+                $helpRequest->title,
+                $helpRequest->location ?? 'Not specified',
+            );
+        }
+
+        // SMS to student confirming their request is live
+        if ($helpRequest->student->phone_number) {
+            $this->twilio->notifyStudentRequestAccepted(
+                $helpRequest->student->phone_number,
+                $instructor->fullName(),
+            );
+        }
+
         return true;
-    }
-
-    protected function findBestInstructor(HelpRequest $helpRequest)
-    {
-        $student = $helpRequest->student;
-
-        return User::where('school_id', $student->school_id)
-            ->where('role', 'instructor')
-            ->where('is_available', true)
-            ->withCount(['helpRequestsAsInstructor' => function ($query) {
-                $query->whereIn('status', ['assigned', 'in_progress']);
-            }])
-            ->orderBy('help_requests_as_instructor_count', 'asc')
-            ->first();
-    }
-
-    protected function addToQueue(HelpRequest $helpRequest)
-    {
-        // Get current max position in queue
-        $maxPosition = DB::table('queue_positions')->max('position') ?? 0;
-
-        // Calculate estimated wait time (assume 15 minutes per request ahead)
-        $estimatedWait = ($maxPosition + 1) * 15;
-
-        $helpRequest->queuePosition()->create([
-            'position' => $maxPosition + 1,
-            'estimated_wait_minutes' => $estimatedWait,
-        ]);
-    }
-
-    protected function notifyInstructor(User $instructor, HelpRequest $helpRequest)
-    {
-        Notification::create([
-            'user_id' => $instructor->id,
-            'help_request_id' => $helpRequest->id,
-            'type' => 'in_app',
-            'title' => 'New Help Request Assigned',
-            'message' => "You have been assigned a new {$helpRequest->priority_level} priority request from {$helpRequest->student->first_name}.",
-            'sent_at' => now(),
-        ]);
-
-        // TODO: Send actual SMS via Twilio in the future
     }
 }
