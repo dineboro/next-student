@@ -70,7 +70,7 @@
                 <div>
                     <p class="text-gray-500 dark:text-gray-400 text-xs uppercase tracking-wide mb-1">Class</p>
                     <p class="font-medium text-gray-900 dark:text-white">
-                        {{ $helpRequest->classSession?->course_name }} ({{ $helpRequest->classSession?->course_code }})
+                        {{ $helpRequest->classSection?->course_name }} ({{ $helpRequest->classSection?->course_code }})
                     </p>
                 </div>
                 <div>

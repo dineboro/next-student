@@ -15,6 +15,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
         ]);
+
+        // Where to send authenticated users
+
+        $middleware->redirectUsersTo(function ($request){
+            $user = auth()->user();
+            if (!$user) return route('login');
+
+            return match($user->role){
+                'instructor' => route('instructor.dashboard'),
+                'admin' => route('admin.dashboard'),
+                default => route('student.dashboard'),
+            };
+        });
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

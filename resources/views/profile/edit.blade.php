@@ -155,7 +155,7 @@
                         <input type="email" name="email" id="email" value="{{ old('email') }}" required
                                class="w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 dark:bg-gray-700 dark:text-white @error('email') border-red-500 @enderror">
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            Must use your school domain: @{{ $user->school->school_domain }}
+{{--                            Must use your school domain: {{ $user->school->school_domain }}--}}
                         </p>
                         @error('email')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>

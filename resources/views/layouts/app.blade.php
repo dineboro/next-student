@@ -104,27 +104,18 @@
                     </button>
 
                     <!-- Notifications Bell -->
-                    <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open"
-                                class="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 relative transition">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                            </svg>
-                        </button>
-
-                        <!-- Notifications Dropdown -->
-                        <div x-show="open"
-                             @click.away="open = false"
-                             x-transition
-                             class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl z-50 overflow-hidden">
-                            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Notifications</h3>
-                            </div>
-                            <div class="px-4 py-6 text-center text-sm text-gray-400 dark:text-gray-500">
-                                No new notifications
-                            </div>
-                        </div>
-                    </div>
+                    @php $unreadCount = auth()->user()->notifications()->where('is_read', false)->count(); @endphp
+                    <a href="{{ route('notifications.index') }}"
+                       class="relative p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                        </svg>
+                        @if($unreadCount > 0)
+                            <span class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center leading-none">
+                                {{ $unreadCount > 9 ? '9+' : $unreadCount }}
+                            </span>
+                        @endif
+                    </a>
 
                     <!-- Profile Dropdown -->
                     <div class="relative" x-data="{ open: false }">
@@ -137,9 +128,15 @@
                                     {{ ucfirst(auth()->user()->role) }}
                                 </p>
                             </div>
-                            <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
-                                {{ substr(auth()->user()->first_name, 0, 1) }}{{ substr(auth()->user()->last_name, 0, 1) }}
-                            </div>
+                            @if(auth()->user()->profile_photo)
+                                <img src="{{ asset('storage/' . auth()->user()->profile_photo) }}"
+                                     alt="{{ auth()->user()->fullName() }}"
+                                     class="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600">
+                            @else
+                                <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                                    {{ substr(auth()->user()->first_name, 0, 1) }}{{ substr(auth()->user()->last_name, 0, 1) }}
+                                </div>
+                            @endif
                         </button>
 
                         <!-- Profile Dropdown Menu -->

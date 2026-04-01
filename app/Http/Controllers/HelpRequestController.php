@@ -37,17 +37,17 @@ class HelpRequestController extends Controller
         }
 
         // Get active sessions this student is enrolled in
-        $sessions = $user->enrolledSessions()
+        $sections = $user->enrolledSections()
             ->where('is_active', true)
             ->with('instructor')
             ->get();
 
-        if ($sessions->isEmpty()) {
+        if ($sections->isEmpty()) {
             return redirect()->route('student.dashboard')
                 ->with('warning', 'You are not enrolled in any active class sections. Please ask your instructor to add you.');
         }
 
-        return view('help-requests.create', compact('sessions'));
+        return view('help-requests.create', compact('sections'));
     }
 
     public function store(Request $request)
@@ -65,7 +65,7 @@ class HelpRequestController extends Controller
         }
 
         $validated = $request->validate([
-            'class_session_id' => 'required|exists:class_sessions,id',
+            'class_section_id' => 'required|exists:class_sections,id',
             'title'            => 'required|string|max:255',
             'description'      => 'required|string|max:2000',
             'location'         => 'required|string|max:255',
@@ -73,8 +73,8 @@ class HelpRequestController extends Controller
         ]);
 
         // Confirm student is enrolled in the chosen session
-        $session = ClassSection::findOrFail($validated['class_session_id']);
-        $enrolled = $session->students()->where('student_id', $user->id)->exists();
+        $section = ClassSection::findOrFail($validated['class_section_id']);
+        $enrolled = $section->students()->where('users.id', $user->id)->exists();
 
         if (!$enrolled) {
             return back()->withErrors(['class_section_id' => 'You are not enrolled in this section.']);
@@ -114,10 +114,10 @@ class HelpRequestController extends Controller
         $helpRequest->load([
             'student',
             'assignedInstructor',
-            'classSession.instructor',
+            'classSection.instructor',
             'comments.user',
         ]);
-
+//        dd($helpRequest);
         return view('help-requests.show', compact('helpRequest'));
     }
 
@@ -133,12 +133,12 @@ class HelpRequestController extends Controller
             return back()->with('error', 'You can only edit a pending request.');
         }
 
-        $sessions = Auth::user()->enrolledSessions()
+        $sessions = Auth::user()->enrolledSections()
             ->where('is_active', true)
             ->with('instructor')
             ->get();
 
-        return view('help-requests.edit', compact('helpRequest', 'sessions'));
+        return view('help-requests.edit', compact('helpRequest', 'sections'));
     }
 
     public function update(Request $request, HelpRequest $helpRequest)

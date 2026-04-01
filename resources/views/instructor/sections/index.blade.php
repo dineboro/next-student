@@ -15,9 +15,9 @@
             </a>
         </div>
 
-        @if(section('success'))
+        @if(session('success'))
             <div class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg p-3 mb-4 text-sm text-green-800 dark:text-green-200">
-                {{ section('success') }}
+                {{ session('success') }}
             </div>
         @endif
 
@@ -52,7 +52,7 @@
                                 <p class="text-xs text-gray-400 mt-0.5">
                                     {{ $section->students_count }} student{{ $section->students_count !== 1 ? 's' : '' }}
                                     @if($section->pending_requests_count > 0)
-                                        · <span class="text-yellow-600 dark:text-yellow-400 font-medium">{{ $section->pending_requests_count }} pending request{{ $section->pending_requests_count !== 1 ? 's' : '' }}</span>
+                                        · <span class="text-yellow-600 dark:text-yellow-400 font-medium">{{ $section->pending_requests_count }} pending request{{ $session->pending_requests_count !== 1 ? 's' : '' }}</span>
                                     @endif
                                 </p>
                             </div>

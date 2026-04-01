@@ -21,11 +21,11 @@
             </div>
         </div>
 
-        @if(section('success'))
-            <div class="bg-green-50 dark:bg-green-900/30 border border-green-200 rounded-lg p-3 mb-4 text-sm text-green-800 dark:text-green-200">{{ section('success') }}</div>
+        @if(session('success'))
+            <div class="bg-green-50 dark:bg-green-900/30 border border-green-200 rounded-lg p-3 mb-4 text-sm text-green-800 dark:text-green-200">{{ session('success') }}</div>
         @endif
-        @if(section('info'))
-            <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-800 dark:text-blue-200">{{ section('info') }}</div>
+        @if(session('info'))
+            <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 rounded-lg p-3 mb-4 text-sm text-blue-800 dark:text-blue-200">{{ session('info') }}</div>
         @endif
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -100,6 +100,7 @@
         document.getElementById('student-search').addEventListener('input', function () {
             clearTimeout(debounceTimer);
             const q = this.value.trim();
+            console.log(q)
             if (q.length < 2) {
                 document.getElementById('search-results').classList.add('hidden');
                 return;

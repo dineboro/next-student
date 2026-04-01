@@ -15,22 +15,22 @@
 
             {{-- Class Session --}}
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Class Session *</label>
-                @if($sessions->count() === 1)
-                    <input type="hidden" name="class_section_id" value="{{ $sessions->first()->id }}">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Class Section *</label>
+                @if($sections->count() === 1)
+                    <input type="hidden" name="class_section_id" value="{{ $sections->first()->id }}">
                     <div class="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-4 py-3 text-sm text-gray-800 dark:text-gray-200">
-                        📚 {{ $sessions->first()->course_name }} ({{ $sessions->first()->course_code }})
-                        — {{ $sessions->first()->semesterLabel() }}
-                        <span class="text-gray-500 dark:text-gray-400">· Instructor: {{ $sessions->first()->instructor->fullName() }}</span>
+                        📚 {{ $sections->first()->course_name }} ({{ $sections->first()->course_code }})
+                        — {{ $sections->first()->semesterLabel() }}
+                        <span class="text-gray-500 dark:text-gray-400">· Instructor: {{ $sections->first()->instructor->fullName() }}</span>
                     </div>
                 @else
                     <select name="class_section_id" required
                             class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none @error('class_section_id') border-red-500 @enderror">
                         <option value="">Select a class</option>
-                        @foreach($sessions as $session)
-                            <option value="{{ $session->id }}" {{ old('class_section_id') == $session->id ? 'selected' : '' }}>
-                                {{ $session->course_name }} ({{ $session->course_code }}) — {{ $session->semesterLabel() }}
-                                · {{ $session->instructor->fullName() }}
+                        @foreach($sections as $section)
+                            <option value="{{ $session->id }}" {{ old('class_section_id') == $section->id ? 'selected' : '' }}>
+                                {{ $section->course_name }} ({{ $section->course_code }}) — {{ $section->semesterLabel() }}
+                                · {{ $section->instructor->fullName() }}
                             </option>
                         @endforeach
                     </select>

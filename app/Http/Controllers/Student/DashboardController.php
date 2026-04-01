@@ -45,7 +45,7 @@ class DashboardController extends Controller
             ->with(['assignedInstructor', 'classSection'])
             ->latest()
             ->paginate(15);
-
+//        dd($requests);
         return view('student.my-requests', compact('requests'));
     }
 }

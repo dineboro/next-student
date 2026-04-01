@@ -17,6 +17,7 @@ class ClassSectionController extends Controller
 
     public function index()
     {
+
         $sections = ClassSection::where('instructor_id', Auth::id())
             ->withCount('students')
             ->withCount(['helpRequests as pending_requests_count' => function ($q) {
@@ -132,7 +133,7 @@ class ClassSectionController extends Controller
             return back()->withErrors(['student_id' => 'Only students can be added to a section.']);
         }
 
-        if ($section->students()->where('student_id', $student->id)->exists()) {
+        if ($section->students()->whereKey($student->id)->exists()) {
             return back()->with('info', "{$student->fullName()} is already in this section.");
         }
 

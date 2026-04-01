@@ -12,7 +12,10 @@ use Illuminate\Validation\Rules\Password;
 
 class RegisterController extends Controller
 {
-    private const ALLOWED_DOMAIN = 'kirkwood.edu';
+    private const ALLOWED_DOMAIN = [
+        'kirkwood.edu',
+        'student.kirkwood.edu'
+    ];
 
     public function showRegistrationForm()
     {
@@ -46,9 +49,9 @@ class RegisterController extends Controller
 
         // Enforce Kirkwood email domain
         $domain = substr(strrchr($validated['email'], '@'), 1);
-        if ($domain !== self::ALLOWED_DOMAIN) {
+        if (!in_array($domain, self::ALLOWED_DOMAIN)) {
             return back()->withErrors([
-                'email' => 'Only @' . self::ALLOWED_DOMAIN . ' email addresses are allowed to register.',
+                'email' => 'Only the following email addresses are allowed to register:<br>' . implode('<br>', self::ALLOWED_DOMAIN),
             ])->withInput();
         }
 
@@ -65,6 +68,7 @@ class RegisterController extends Controller
         // Generate unique ID
         $idPrefix = $role === 'student' ? 'STU-' . date('Y') . '-' : 'INS-' . date('Y') . '-';
         $uniqueId = $idPrefix . strtoupper(Str::random(6));
+
 
         $user = User::create([
             'first_name'                   => $validated['first_name'],

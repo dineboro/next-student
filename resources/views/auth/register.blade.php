@@ -51,7 +51,7 @@
                 <input type="email" name="email" value="{{ old('email') }}" required
                        placeholder="yourname@kirkwood.edu"
                        class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none @error('email') border-red-500 @enderror">
-                @error('email')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                @error('email')<p class="text-red-500 text-xs mt-1">{!! $message !!}</p>@enderror
             </div>
 
             {{-- Phone --}}

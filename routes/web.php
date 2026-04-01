@@ -13,6 +13,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\UserApprovalController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\NotificationController;
 
 // ============================================================================
 // ROOT
@@ -73,10 +75,10 @@ Route::middleware(['auth', 'role:instructor'])->prefix('instructor')->name('inst
     Route::get('/history', [InstructorDashboardController::class, 'history'])->name('history');
 
     // Class section management
+    Route::get('/sections/search-student', [ClassSectionController::class, 'searchStudent'])->name('sections.search-student');
     Route::resource('sections', ClassSectionController::class)->names('sections');
 
 // Roster management
-    Route::get('/sections/search-student', [ClassSectionController::class, 'searchStudent'])->name('sections.search-student');
     Route::post('/sections/{section}/students', [ClassSectionController::class, 'addStudent'])->name('sections.students.add');
     Route::delete('/sections/{section}/students/{student}', [ClassSectionController::class, 'removeStudent'])->name('sections.students.remove');
     // Request actions
@@ -107,6 +109,14 @@ Route::middleware('auth')->group(function () {
     Route::put('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.update-notifications');
     Route::put('/settings/theme', [SettingsController::class, 'updateTheme'])->name('settings.update-theme');
     Route::delete('/settings/account', [SettingsController::class, 'deleteAccount'])->name('settings.delete-account');
+
+    // Profile email update
+    Route::put('/profile/email', [ProfileController::class, 'updateEmail'])->name('profile.update-email');
+
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.mark-all-read');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.mark-read');
 });
 
 // ============================================================================
@@ -120,4 +130,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/users/pending', [UserApprovalController::class, 'pending'])->name('users.pending');
     Route::post('/users/{user}/approve', [UserApprovalController::class, 'approve'])->name('users.approve');
     Route::post('/users/{user}/reject', [UserApprovalController::class, 'reject'])->name('users.reject');
+
+    // User lists
+    Route::get('/students', [AdminUserController::class, 'students'])->name('students');
+    Route::get('/instructors', [AdminUserController::class, 'instructors'])->name('instructors');
+
+    // Request lists
+    Route::get('/requests', [AdminDashboardController::class, 'requests'])->name('requests');
 });
