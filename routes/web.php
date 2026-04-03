@@ -15,6 +15,8 @@ use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\UserApprovalController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\ForgotEmailController;
 
 // ============================================================================
 // ROOT
@@ -41,6 +43,16 @@ Route::post('/verify-email/resend', [EmailVerificationController::class, 'resend
 Route::get('/pending-approval', [EmailVerificationController::class, 'pendingApproval'])->name('verification.pending-approval');
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
+
+// Forgot Password
+Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])->name('password.forgot');
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetCode'])->name('password.forgot.send');
+Route::get('/reset-password', [ForgotPasswordController::class, 'showResetForm'])->name('password.reset.form');
+Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.reset');
+
+// Forgot Email
+Route::get('/forgot-email', [ForgotEmailController::class, 'showForm'])->name('email.forgot');
+Route::post('/forgot-email', [ForgotEmailController::class, 'lookup'])->name('email.lookup');
 
 // ============================================================================
 // STUDENT ROUTES

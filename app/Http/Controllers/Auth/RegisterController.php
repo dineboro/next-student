@@ -66,8 +66,10 @@ class RegisterController extends Controller
         $verificationCode = strtoupper(Str::random(6));
 
         // Generate unique ID
-        $idPrefix = $role === 'student' ? 'STU-' . date('Y') . '-' : 'INS-' . date('Y') . '-';
-        $uniqueId = $idPrefix . strtoupper(Str::random(6));
+        $isKirkwood = in_array($domain, self::ALLOWED_DOMAIN);
+        $uniqueId = $isKirkwood
+            ? 'K' . str_pad(mt_rand(0, 9999999), 7, '0', STR_PAD_LEFT)
+            : ($role === 'student' ? 'STU-' . date('Y') . '-' : 'INS-' . date('Y') . '-') . strtoupper(Str::random(6));
 
 
         $user = User::create([

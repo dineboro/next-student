@@ -20,7 +20,7 @@ class RequestAssignmentService
      */
     public function assignInstructor(HelpRequest $helpRequest): bool
     {
-        $session = ClassSection::with('instructor')->find($helpRequest->class_session_id);
+        $session = ClassSection::with('instructor')->find($helpRequest->class_section_id);
 
         if (!$session || !$session->instructor) {
             return false;
@@ -47,7 +47,7 @@ class RequestAssignmentService
             $helpRequest->activityLogs()->create([
                 'user_id'     => null,
                 'action'      => 'instructor_assigned',
-                'description' => "Auto-assigned to {$instructor->fullName()} via session {$helpRequest->classSession->course_code}",
+                'description' => "Auto-assigned to {$instructor->fullName()} via section {$helpRequest->classSection->course_code}",
             ]);
         });
 

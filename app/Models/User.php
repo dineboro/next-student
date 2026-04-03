@@ -31,6 +31,8 @@ class User extends Authenticatable
         'rejection_reason',
         'approved_at',
         'approved_by',
+        'password_reset_token',
+        'password_reset_expires_at',
     ];
 
     protected $hidden = [
@@ -43,6 +45,7 @@ class User extends Authenticatable
         'password'                      => 'hashed',
         'verification_code_expires_at'  => 'datetime',
         'approved_at'                   => 'datetime',
+        'password_reset_expires_at'     => 'datetime',
     ];
 
     // -------------------------------------------------------------------------

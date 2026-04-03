@@ -5,8 +5,8 @@
 @section('content')
     <div class="max-w-lg mx-auto py-10 px-4">
         <div class="text-center mb-8">
-            <img src="https://www.kirkwood.edu/_files/img/Kirkwood_logo_new_v2.svg" alt="Kirkwood" class="h-12 mx-auto mb-4" onerror="this.style.display='block'">
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white </h1>
+            <img src="https://www.kirkwood.edu/_files/img/Kirkwood_logo_new_v2.svg" alt="Kirkwood Community College" class="h-20 w-auto mx-auto mb-4 opacity-100">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white"></h1>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Kirkwood Community College Help System</p>
         </div>
 
