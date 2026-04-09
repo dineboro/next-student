@@ -14,7 +14,7 @@ class RequestAssignmentService
 
     /**
      * Given a newly created HelpRequest, find the instructor via the
-     * class session and assign the request.
+     * class section and assign the request.
      *
      * Returns true on success, false if no instructor could be found.
      */

@@ -16,7 +16,7 @@ class SchoolSeeder extends Seeder
 
         DB::table('schools')->insert([
             [
-                'school_name' => 'Kirkwood Community College',
+                'school_name' => 'NextStudent',
                 'school_domain' => 'kirkwood.edu',
                 'address' => '6301 Kirkwood Blvd SW, Cedar Rapids, IA 52404',
                 'contact_info' => '+1-319-398-5411',

@@ -160,7 +160,7 @@ class EmailVerificationController extends Controller
 
                 <div style='background: #2563eb; padding: 32px; text-align: center;'>
                     <h1 style='color: #ffffff; margin: 0; font-size: 22px;'>Kirkwood Help System</h1>
-                    <p style='color: #bfdbfe; margin: 8px 0 0; font-size: 14px;'>Kirkwood Community College</p>
+                    <p style='color: #bfdbfe; margin: 8px 0 0; font-size: 14px;'>NextStudent</p>
                 </div>
 
                 <div style='padding: 32px;'>
@@ -181,7 +181,7 @@ class EmailVerificationController extends Controller
                 </div>
 
                 <div style='background: #f9fafb; padding: 16px; text-align: center; border-top: 1px solid #e5e7eb;'>
-                    <p style='color: #9ca3af; font-size: 11px; margin: 0;'>© {$year} Kirkwood Community College · NextStudent Help System</p>
+                    <p style='color: #9ca3af; font-size: 11px; margin: 0;'>© {$year} NextStudent Help System</p>
                 </div>
             </div>
         </body>

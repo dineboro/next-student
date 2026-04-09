@@ -6,7 +6,7 @@
     <div class="max-w-6xl mx-auto px-4 py-8">
         <div class="mb-6">
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Kirkwood Community College Help System</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">NextStudent Help System</p>
         </div>
 
         {{-- Stats --}}

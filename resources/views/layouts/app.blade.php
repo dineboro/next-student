@@ -283,7 +283,12 @@
 <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-12 transition-colors duration-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <p class="text-center text-sm text-gray-500 dark:text-gray-400">
-            © {{ date('Y') }} NextStudent — Kirkwood Community College. All rights reserved.
+            © {{ date('Y') }} NextStudent. All rights reserved.
+        </p>
+        <p class="text-center text-xs text-gray-400 dark:text-gray-500 mt-2 space-x-4">
+            <a href="{{ route('legal.privacy') }}" class="hover:underline">Privacy Policy</a>
+            <span>&middot;</span>
+            <a href="{{ route('legal.terms') }}" class="hover:underline">Terms &amp; Conditions</a>
         </p>
     </div>
 </footer>

@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Register — Kirkwood Help')
+@section('title', 'Register — NextStudent Help')
 
 @section('content')
     <div class="max-w-lg mx-auto py-10 px-4">
         <div class="text-center mb-8">
-            <img src="https://www.kirkwood.edu/_files/img/Kirkwood_logo_new_v2.svg" alt="Kirkwood Community College" class="h-20 w-auto mx-auto mb-4 opacity-100">
+            <img src="https://www.kirkwood.edu/_files/img/Kirkwood_logo_new_v2.svg" alt="NextStudent" class="h-20 w-auto mx-auto mb-4 opacity-100">
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white"></h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Kirkwood Community College Help System</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Next Student Help System</p>
         </div>
 
         {{-- Role Tabs --}}
@@ -48,9 +48,10 @@
             {{-- Email --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kirkwood Email *</label>
-                <input type="email" name="email" value="{{ old('email') }}" required
-                       placeholder="yourname@kirkwood.edu"
+                <input type="email" name="email" id="email-input" value="{{ old('email') }}" required
+                       placeholder="yourname@student.kirkwood.edu"
                        class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none @error('email') border-red-500 @enderror">
+                <p id="email-hint" class="text-xs text-gray-400 mt-1">Use your <span id="email-domain">@student.kirkwood.edu</span> address</p>
                 @error('email')<p class="text-red-500 text-xs mt-1">{!! $message !!}</p>@enderror
             </div>
 
@@ -131,6 +132,22 @@
                 📋 After verifying your email, your account will be reviewed by an admin. You'll receive an SMS once approved.
             </div>
 
+            {{-- Consent --}}
+            <div>
+                <label class="flex items-start gap-2 cursor-pointer">
+                    <input type="checkbox" name="consent" id="consent" required
+                           class="mt-0.5 @error('consent') ring-2 ring-red-500 @enderror">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">
+                        I agree to the
+                        <a href="{{ route('legal.terms') }}" target="_blank" class="text-blue-600 hover:underline">Terms &amp; Conditions</a>
+                        and
+                        <a href="{{ route('legal.privacy') }}" target="_blank" class="text-blue-600 hover:underline">Privacy Policy</a>,
+                        and I consent to receive SMS notifications about my help requests. Message &amp; data rates may apply. Reply STOP to opt out.
+                    </span>
+                </label>
+                @error('consent')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+            </div>
+
             <button type="submit"
                     class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition text-sm">
                 Create Account
@@ -160,6 +177,10 @@
             document.getElementById('field-department').classList.toggle('hidden', role !== 'instructor');
             document.getElementById('field-badge').classList.toggle('hidden', role !== 'instructor');
             document.getElementById('instructor-note').classList.toggle('hidden', role !== 'instructor');
+
+            const domain = role === 'student' ? '@student.kirkwood.edu' : '@kirkwood.edu';
+            document.getElementById('email-input').placeholder = 'yourname' + domain;
+            document.getElementById('email-domain').textContent = domain;
         }
 
         function previewBadge(input) {

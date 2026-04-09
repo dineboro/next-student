@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Help Request #{{ $helpRequest->id }}')
+@section('title', 'Help Request')
 
 @section('content')
     <div class="max-w-3xl mx-auto px-4 py-8">

@@ -34,6 +34,7 @@ class RegisterController extends Controller
             'password'     => ['required', 'confirmed', Password::min(8)],
             'role'         => 'required|in:student,instructor',
             'phone_number' => 'required|string|max:20',
+            'consent'      => 'accepted',
         ];
 
         if ($role === 'student') {
@@ -45,13 +46,19 @@ class RegisterController extends Controller
             $rules['badge_photo'] = 'required|image|mimes:jpg,jpeg,png|max:4096';
         }
 
-        $validated = $request->validate($rules);
+        $validated = $request->validate($rules, [
+            'email.unique'    => 'This email address is already registered. <a href="' . route('login') . '" class="underline">Sign in instead</a> or use a different email.',
+            'consent.accepted' => 'You must agree to the Terms & Conditions and Privacy Policy to register.',
+        ]);
 
-        // Enforce Kirkwood email domain
+        // Enforce role-specific Kirkwood email domain
         $domain = substr(strrchr($validated['email'], '@'), 1);
-        if (!in_array($domain, self::ALLOWED_DOMAIN)) {
+        $requiredDomain = $role === 'student' ? 'student.kirkwood.edu' : 'kirkwood.edu';
+        if ($domain !== $requiredDomain) {
             return back()->withErrors([
-                'email' => 'Only the following email addresses are allowed to register:<br>' . implode('<br>', self::ALLOWED_DOMAIN),
+                'email' => $role === 'student'
+                    ? 'Students must register with a <strong>@student.kirkwood.edu</strong> email address.'
+                    : 'Instructors must register with a <strong>@kirkwood.edu</strong> email address.',
             ])->withInput();
         }
 

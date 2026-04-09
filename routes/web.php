@@ -25,6 +25,13 @@ use App\Http\Controllers\Auth\ForgotEmailController;
 Route::get('/', fn() => redirect()->route('login'));
 
 // ============================================================================
+// LEGAL (public — required for Twilio A2P 10DLC)
+// ============================================================================
+
+Route::get('/privacy-policy', fn() => view('legal.privacy-policy'))->name('legal.privacy');
+Route::get('/terms', fn() => view('legal.terms'))->name('legal.terms');
+
+// ============================================================================
 // AUTH
 // ============================================================================
 
