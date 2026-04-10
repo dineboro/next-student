@@ -28,7 +28,7 @@
                             class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none @error('class_section_id') border-red-500 @enderror">
                         <option value="">Select a class</option>
                         @foreach($sections as $section)
-                            <option value="{{ $session->id }}" {{ old('class_section_id') == $section->id ? 'selected' : '' }}>
+                            <option value="{{ $section->id }}" {{ old('class_section_id') == $section->id ? 'selected' : '' }}>
                                 {{ $section->course_name }} ({{ $section->course_code }}) — {{ $section->semesterLabel() }}
                                 · {{ $section->instructor->fullName() }}
                             </option>
