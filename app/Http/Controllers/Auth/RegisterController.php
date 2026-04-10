@@ -38,7 +38,8 @@ class RegisterController extends Controller
         ];
 
         if ($role === 'student') {
-            $rules['major'] = 'required|string|max:255';
+            $rules['major']     = 'required|string|max:255';
+            $rules['k_number']  = ['required', 'regex:/^[Kk]\d{7}$/', 'unique:users,student_id'];
         }
 
         if ($role === 'instructor') {
@@ -47,8 +48,11 @@ class RegisterController extends Controller
         }
 
         $validated = $request->validate($rules, [
-            'email.unique'    => 'This email address is already registered. <a href="' . route('login') . '" class="underline">Sign in instead</a> or use a different email.',
-            'consent.accepted' => 'You must agree to the Terms & Conditions and Privacy Policy to register.',
+            'email.unique'       => 'This email address is already registered. <a href="' . route('login') . '" class="underline">Sign in instead</a> or use a different email.',
+            'consent.accepted'   => 'You must agree to the Terms & Conditions and Privacy Policy to register.',
+            'k_number.required'  => 'Your K-number is required.',
+            'k_number.regex'     => 'K-number must be in the format K followed by 7 digits (e.g. K1234567).',
+            'k_number.unique'    => 'This K-number is already registered.',
         ]);
 
         // Enforce role-specific Kirkwood email domain
@@ -72,12 +76,8 @@ class RegisterController extends Controller
         // Generate verification code
         $verificationCode = strtoupper(Str::random(6));
 
-        // Generate unique ID
-        $isKirkwood = in_array($domain, self::ALLOWED_DOMAIN);
-        $uniqueId = $isKirkwood
-            ? 'K' . str_pad(mt_rand(0, 9999999), 7, '0', STR_PAD_LEFT)
-            : ($role === 'student' ? 'STU-' . date('Y') . '-' : 'INS-' . date('Y') . '-') . strtoupper(Str::random(6));
-
+        // Generate unique ID for instructors
+        $instructorId = 'INS-' . date('Y') . '-' . strtoupper(Str::random(6));
 
         $user = User::create([
             'first_name'                   => $validated['first_name'],
@@ -89,8 +89,8 @@ class RegisterController extends Controller
             'major'                        => $role === 'student' ? $validated['major'] : null,
             'department'                   => $role === 'instructor' ? $validated['department'] : null,
             'badge_photo'                  => $badgePhotoPath,
-            'student_id'                   => $role === 'student' ? $uniqueId : null,
-            'instructor_id'                => $role === 'instructor' ? $uniqueId : null,
+            'student_id'                   => $role === 'student' ? strtoupper($validated['k_number']) : null,
+            'instructor_id'                => $role === 'instructor' ? $instructorId : null,
             'verification_code'            => $verificationCode,
             'verification_code_expires_at' => now()->addHours(24),
             'approval_status'              => 'pending',

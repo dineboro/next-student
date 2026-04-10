@@ -65,6 +65,18 @@
                 @error('phone_number')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
 
+            {{-- STUDENT: K-Number --}}
+            <div id="field-knumber">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">K-Number *
+                    <span class="font-normal text-gray-400">(your Kirkwood student ID)</span>
+                </label>
+                <input type="text" name="k_number" value="{{ old('k_number') }}"
+                       placeholder="e.g. K1234567"
+                       maxlength="8"
+                       class="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none @error('k_number') border-red-500 @enderror">
+                @error('k_number')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+            </div>
+
             {{-- STUDENT: Major --}}
             <div id="field-major">
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Academic Major *</label>
@@ -172,6 +184,7 @@
             document.getElementById('tab-student').classList.toggle('active-tab', role === 'student');
             document.getElementById('tab-instructor').classList.toggle('active-tab', role === 'instructor');
 
+            document.getElementById('field-knumber').classList.toggle('hidden', role !== 'student');
             document.getElementById('field-major').classList.toggle('hidden', role !== 'student');
             document.getElementById('field-department').classList.toggle('hidden', role !== 'instructor');
             document.getElementById('field-badge').classList.toggle('hidden', role !== 'instructor');
