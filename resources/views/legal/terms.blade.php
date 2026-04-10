@@ -97,7 +97,7 @@
             <section>
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">14. Contact</h2>
                 <p><strong>Next Student</strong><br>
-                Email: <a href="mailto:support@nextstudent.app" class="text-blue-600 hover:underline">support@nextstudent.app</a></p>
+                Email: <a href="mailto:support@nextstudent.org" class="text-blue-600 hover:underline">support@nextstudent.org</a></p>
             </section>
 
         </div>

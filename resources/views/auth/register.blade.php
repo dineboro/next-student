@@ -5,7 +5,6 @@
 @section('content')
     <div class="max-w-lg mx-auto py-10 px-4">
         <div class="text-center mb-8">
-            <img src="https://www.kirkwood.edu/_files/img/Kirkwood_logo_new_v2.svg" alt="NextStudent" class="h-20 w-auto mx-auto mb-4 opacity-100">
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white"></h1>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Next Student Help System</p>
         </div>
