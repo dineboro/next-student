@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', '{{ $section->course_name }} — Roster')
+@section('title', 'Section')
 
 @section('content')
     <div class="max-w-4xl mx-auto px-4 py-8">
