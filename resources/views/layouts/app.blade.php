@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'NextStudent - Kirkwood Help')</title>
+    <title>@yield('title', 'NextStudent - Help')</title>
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -197,9 +197,31 @@
                     </button>
 
                 @else
+                    <!-- Public nav links — desktop only -->
+                    <div class="hidden sm:flex items-center space-x-1 mr-2">
+                        <a href="{{ route('home') }}"
+                           @class([
+                               'text-sm px-3 py-2 rounded transition',
+                               'text-blue-600 dark:text-blue-400 font-semibold' => request()->routeIs('home'),
+                               'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white' => !request()->routeIs('home'),
+                           ])>Home</a>
+                        <a href="{{ route('services') }}"
+                           @class([
+                               'text-sm px-3 py-2 rounded transition',
+                               'text-blue-600 dark:text-blue-400 font-semibold' => request()->routeIs('services'),
+                               'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white' => !request()->routeIs('services'),
+                           ])>Services</a>
+                        <a href="{{ route('contact') }}"
+                           @class([
+                               'text-sm px-3 py-2 rounded transition',
+                               'text-blue-600 dark:text-blue-400 font-semibold' => request()->routeIs('contact'),
+                               'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white' => !request()->routeIs('contact'),
+                           ])>Contact</a>
+                    </div>
+                    <!-- Login / Register — always visible on desktop, hidden on mobile behind hamburger -->
                     <a href="{{ route('login') }}"
                         @class([
-                            'text-sm px-4 py-2 rounded transition',
+                            'hidden sm:inline-block text-sm px-4 py-2 rounded transition',
                             'text-white bg-blue-600 hover:bg-blue-700' => request()->routeIs('login'),
                             'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white' => !request()->routeIs('login')
                         ])>
@@ -207,12 +229,20 @@
                     </a>
                     <a href="{{ route('register') }}"
                         @class([
-                            'text-sm px-4 py-2 rounded transition',
+                            'hidden sm:inline-block text-sm px-4 py-2 rounded transition',
                             'text-white bg-blue-600 hover:bg-blue-700' => request()->routeIs('register'),
                             'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white' => !request()->routeIs('register')
                         ])>
                         Register
                     </a>
+                    <!-- Mobile hamburger for guests -->
+                    <button @click="mobileMenuOpen = !mobileMenuOpen"
+                            class="sm:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path x-show="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            <path x-show="mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
                 @endauth
             </div>
         </div>
@@ -236,6 +266,27 @@
                     <a href="{{ route('instructor.sections.index') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">My Sections</a>
                     <a href="{{ route('instructor.history') }}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">History</a>
                 @endif
+            </div>
+        </div>
+    @else
+        <!-- Guest mobile menu -->
+        <div x-show="mobileMenuOpen"
+             x-transition
+             class="sm:hidden border-t border-gray-200 dark:border-gray-700">
+            <div class="pt-2 pb-3 space-y-1">
+                <a href="{{ route('home') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('home') ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700' }}">Home</a>
+                <a href="{{ route('services') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('services') ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700' }}">Services</a>
+                <a href="{{ route('contact') }}" class="block pl-3 pr-4 py-2 border-l-4 {{ request()->routeIs('contact') ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'border-transparent text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700' }}">Contact</a>
+                <div class="border-t border-gray-100 dark:border-gray-700 mt-2 pt-2 px-3 flex gap-2">
+                    <a href="{{ route('login') }}"
+                       class="flex-1 text-center py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                        Login
+                    </a>
+                    <a href="{{ route('register') }}"
+                       class="flex-1 text-center py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition">
+                        Register
+                    </a>
+                </div>
             </div>
         </div>
     @endauth

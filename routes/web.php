@@ -17,12 +17,16 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ForgotEmailController;
+use App\Http\Controllers\ContactController;
 
 // ============================================================================
-// ROOT
+// ROOT & PUBLIC PAGES
 // ============================================================================
 
-Route::get('/', fn() => redirect()->route('login'));
+Route::get('/', fn() => view('home'))->name('home');
+Route::get('/services', fn() => view('services'))->name('services');
+Route::get('/contact', [ContactController::class, 'show'])->name('contact');
+Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 
 // ============================================================================
 // LEGAL (public — required for Twilio A2P 10DLC)
@@ -153,6 +157,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // User lists
     Route::get('/students', [AdminUserController::class, 'students'])->name('students');
     Route::get('/instructors', [AdminUserController::class, 'instructors'])->name('instructors');
+    Route::post('/instructors/{user}/deactivate', [AdminUserController::class, 'deactivate'])->name('instructors.deactivate');
 
     // Request lists
     Route::get('/requests', [AdminDashboardController::class, 'requests'])->name('requests');

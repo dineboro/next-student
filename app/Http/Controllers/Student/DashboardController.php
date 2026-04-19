@@ -34,7 +34,22 @@ class DashboardController extends Controller
             ->with('instructor')
             ->get();
 
-        return view('student.dashboard', compact('activeRequest', 'pastRequests', 'enrolledSections'));
+        // Compute queue position: how many pending requests in the same section were submitted before this one
+        $queuePosition = null;
+        if ($activeRequest) {
+            $queuePosition = HelpRequest::where('class_section_id', $activeRequest->class_section_id)
+                ->where('status', 'pending')
+                ->where(function ($q) use ($activeRequest) {
+                    $q->where('created_at', '<', $activeRequest->created_at)
+                      ->orWhere(function ($q2) use ($activeRequest) {
+                          $q2->where('created_at', $activeRequest->created_at)
+                             ->where('id', '<', $activeRequest->id);
+                      });
+                })
+                ->count() + 1;
+        }
+
+        return view('student.dashboard', compact('activeRequest', 'pastRequests', 'enrolledSections', 'queuePosition'));
     }
 
     public function myRequests()

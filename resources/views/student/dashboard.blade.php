@@ -37,6 +37,18 @@
                             @endif
                         </p>
                         <p class="text-sm text-gray-500 dark:text-gray-400">📍 {{ $activeRequest->location }}</p>
+                        @if($queuePosition)
+                            <div class="mt-2 inline-flex items-center gap-1.5 bg-yellow-100 dark:bg-yellow-800/40 text-yellow-800 dark:text-yellow-200 text-xs font-semibold px-2.5 py-1 rounded-full">
+                                <span>🔢</span>
+                                <span>
+                                    @if($queuePosition === 1)
+                                        You're next in line!
+                                    @else
+                                        Position #{{ $queuePosition }} in queue
+                                    @endif
+                                </span>
+                            </div>
+                        @endif
                     </div>
                     <div class="flex flex-col gap-2 ml-4">
                         <a href="{{ route('student.requests.show', $activeRequest) }}"

@@ -22,6 +22,7 @@
                         <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Department</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Instructor ID</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Joined</th>
+                        <th class="px-4 py-3 text-left font-medium text-gray-600 dark:text-gray-300">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -47,10 +48,20 @@
                             <td class="px-4 py-3 text-gray-600 dark:text-gray-400">{{ $instructor->departmentLabel() }}</td>
                             <td class="px-4 py-3 text-gray-600 dark:text-gray-400">{{ $instructor->instructor_id ?? '—' }}</td>
                             <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $instructor->created_at->format('M d, Y') }}</td>
+                            <td class="px-4 py-3">
+                                <form method="POST" action="{{ route('admin.instructors.deactivate', $instructor) }}"
+                                      onsubmit="return confirm('Deactivate {{ addslashes($instructor->fullName()) }}? This will close all their sections and cancel pending requests.')">
+                                    @csrf
+                                    <button type="submit"
+                                            class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition">
+                                        Deactivate
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-gray-400 dark:text-gray-500">No instructors found.</td>
+                            <td colspan="6" class="px-4 py-8 text-center text-gray-400 dark:text-gray-500">No instructors found.</td>
                         </tr>
                     @endforelse
                 </tbody>

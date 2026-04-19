@@ -12,7 +12,7 @@
 
             <section>
                 <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">1. About This Policy</h2>
-                <p>Next Student ("we," "us," or "our") is an independent academic help-request platform. We are not affiliated with, owned by, or operated by Kirkwood Community College. We currently serve Kirkwood Community College students and faculty exclusively, which is why registration requires a Kirkwood email address. This Privacy Policy explains what personal information we collect, how we use it, and your rights regarding that information.</p>
+                <p>Next Student ("we," "us," or "our") is an independent academic help-request platform. We are not affiliated with, owned by, or operated by faculty member. We currently serve Kirkwood Community College students and faculty exclusively, which is why registration requires a Kirkwood email address. This Privacy Policy explains what personal information we collect, how we use it, and your rights regarding that information.</p>
             </section>
 
             <section>

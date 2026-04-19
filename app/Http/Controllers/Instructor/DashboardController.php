@@ -21,7 +21,7 @@ class DashboardController extends Controller
         $pendingRequests = HelpRequest::where('assigned_instructor_id', $user->id)
             ->where('status', 'pending')
             ->with(['student', 'classSection'])
-            ->latest()
+            ->oldest()  // FIFO: first submitted = first served
             ->get();
 
         $stats = [

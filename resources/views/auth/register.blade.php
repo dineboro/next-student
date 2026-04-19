@@ -143,7 +143,7 @@
                 📋 After verifying your email, your account will be reviewed by an admin. You'll receive an SMS once approved.
             </div>
 
-            {{-- Consent --}}
+            {{-- Terms & Privacy Consent --}}
             <div>
                 <label class="flex items-start gap-2 cursor-pointer">
                     <input type="checkbox" name="consent" id="consent" required
@@ -152,11 +152,26 @@
                         I agree to the
                         <a href="{{ route('legal.terms') }}" target="_blank" class="text-blue-600 hover:underline">Terms &amp; Conditions</a>
                         and
-                        <a href="{{ route('legal.privacy') }}" target="_blank" class="text-blue-600 hover:underline">Privacy Policy</a>,
-                        and I consent to receive SMS notifications about my help requests. Message &amp; data rates may apply. Reply STOP to opt out.
+                        <a href="{{ route('legal.privacy') }}" target="_blank" class="text-blue-600 hover:underline">Privacy Policy</a>.
                     </span>
                 </label>
                 @error('consent')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+            </div>
+
+            {{-- SMS Consent (separate — required for Twilio A2P compliance) --}}
+            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                <label class="flex items-start gap-2 cursor-pointer">
+                    <input type="checkbox" name="sms_consent" id="sms_consent" required
+                           class="mt-0.5 @error('sms_consent') ring-2 ring-red-500 @enderror">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">
+                        <strong>I consent to receive SMS text messages</strong> from NextStudent about my help
+                        requests — including request updates, instructor responses, and account notifications.
+                        Message &amp; data rates may apply. Message frequency varies. Reply
+                        <strong>STOP</strong> to opt out at any time. Reply <strong>HELP</strong> for help.
+                        SMS consent is not required to use the platform and is not a condition of registration.
+                    </span>
+                </label>
+                @error('sms_consent')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
 
             <button type="submit"

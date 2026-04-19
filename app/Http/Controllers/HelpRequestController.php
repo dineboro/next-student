@@ -99,7 +99,7 @@ class HelpRequestController extends Controller
         // Assign instructor from session and fire SMS
         $this->assignmentService->assignInstructor($helpRequest);
 
-        return redirect()->route('student.dashboard')
+        return redirect()->route('student.requests.show', $helpRequest)
             ->with('success', 'Help request submitted! Your instructor has been notified.');
     }
 

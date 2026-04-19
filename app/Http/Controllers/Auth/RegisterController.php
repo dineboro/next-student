@@ -33,8 +33,9 @@ class RegisterController extends Controller
             'email'        => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password'     => ['required', 'confirmed', Password::min(8)],
             'role'         => 'required|in:student,instructor',
-            'phone_number' => 'required|string|max:20',
+            'phone_number' => ['required', 'string', 'max:20', 'unique:users,phone_number'],
             'consent'      => 'accepted',
+            'sms_consent'  => 'accepted',
         ];
 
         if ($role === 'student') {
@@ -48,11 +49,13 @@ class RegisterController extends Controller
         }
 
         $validated = $request->validate($rules, [
-            'email.unique'       => 'This email address is already registered. <a href="' . route('login') . '" class="underline">Sign in instead</a> or use a different email.',
-            'consent.accepted'   => 'You must agree to the Terms & Conditions and Privacy Policy to register.',
-            'k_number.required'  => 'Your K-number is required.',
-            'k_number.regex'     => 'K-number must be in the format K followed by 7 digits (e.g. K1234567).',
-            'k_number.unique'    => 'This K-number is already registered.',
+            'email.unique'         => 'This email address is already registered. <a href="' . route('login') . '" class="underline">Sign in instead</a> or use a different email.',
+            'phone_number.unique'  => 'This phone number is already registered. Please use a different number or sign in.',
+            'consent.accepted'     => 'You must agree to the Terms & Conditions and Privacy Policy to register.',
+            'sms_consent.accepted' => 'You must provide SMS consent to receive help request notifications.',
+            'k_number.required'    => 'Your K-number is required.',
+            'k_number.regex'       => 'K-number must be in the format K followed by 7 digits (e.g. K1234567).',
+            'k_number.unique'      => 'This K-number is already registered.',
         ]);
 
         // Enforce role-specific Kirkwood email domain

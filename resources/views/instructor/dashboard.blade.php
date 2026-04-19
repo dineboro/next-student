@@ -65,11 +65,17 @@
                 </div>
             @else
                 <div class="divide-y divide-gray-100 dark:divide-gray-700">
-                    @foreach($pendingRequests as $request)
+                    @foreach($pendingRequests as $position => $request)
                         <div class="p-5">
                             <div class="flex items-start justify-between gap-4">
                                 <div class="flex-1 min-w-0">
-                                    <p class="font-semibold text-gray-900 dark:text-white truncate mb-1">{{ $request->title }}</p>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold
+                                            {{ $position === 0 ? 'bg-yellow-500 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300' }}">
+                                            {{ $position + 1 }}
+                                        </span>
+                                        <p class="font-semibold text-gray-900 dark:text-white truncate">{{ $request->title }}</p>
+                                    </div>
                                     <p class="text-sm text-gray-600 dark:text-gray-400 mb-1 line-clamp-2">{{ $request->description }}</p>
                                     <div class="flex flex-wrap gap-3 text-xs text-gray-400">
                                         <span>👤 {{ $request->student->fullName() }}</span>
