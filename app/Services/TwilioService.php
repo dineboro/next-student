@@ -59,7 +59,7 @@ class TwilioService
 
     public function notifyInstructorNewRequest(string $phone, string $studentName, string $requestTitle, string $location): bool
     {
-        $message = "Kirkwood Help Request\n"
+        $message = "NextStudent Help Request\n"
             . "Student: {$studentName}\n"
             . "Title: {$requestTitle}\n"
             . "Location: {$location}\n"
@@ -70,7 +70,7 @@ class TwilioService
 
     public function notifyStudentRequestAccepted(string $phone, string $instructorName): bool
     {
-        $message = "Kirkwood Help System\n"
+        $message = "NextStudent Help System\n"
             . "Your help request has been picked up by {$instructorName}.\n"
             . "They are on their way!";
 
@@ -79,7 +79,7 @@ class TwilioService
 
     public function notifyStudentRequestCompleted(string $phone, string $instructorName): bool
     {
-        $message = "Kirkwood Help System\n"
+        $message = "NextStudent Help System\n"
             . "Your help request was marked complete by {$instructorName}.\n"
             . "We hope it was helpful!";
 
@@ -88,7 +88,7 @@ class TwilioService
 
     public function notifyStudentRequestCancelledByInstructor(string $phone, string $instructorName): bool
     {
-        $message = "Kirkwood Help System\n"
+        $message = "NextStudent Help System\n"
             . "Your help request was cancelled by {$instructorName}.\n"
             . "You can submit a new request at any time.";
 
@@ -97,7 +97,7 @@ class TwilioService
 
     public function notifyInstructorRequestCancelledByStudent(string $phone, string $studentName): bool
     {
-        $message = "Kirkwood Help System\n"
+        $message = "NextStudent Help System\n"
             . "{$studentName} cancelled their help request.";
 
         return $this->send($phone, $message);
